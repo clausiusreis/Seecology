@@ -1,0 +1,169 @@
+* { margin: 0; padding: 0; }
+body { font-family: "ronnia-1","ronnia-2"; background: #ececec; font-size: 14px; }
+#page-wrap { width: 900px; margin: 20px auto; }
+#date, #time { width: 450px; }
+#date { float: left; }
+#time { float: right; }
+h1 { font-size: 64px; line-height: 1.5; padding: 10px 0 0 0; color: white; }
+
+#stay-put {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%; 
+	background: #ececec;
+	text-align: center; 
+	z-index: 3;
+}
+#stay-put .inside {
+  width: 894px;
+  margin: 0 auto;
+  background: #363636;
+}
+
+#buttons {
+	padding-top: 260px; 
+}
+
+#buttons > div > div {
+  padding: 5px;
+  margin: 6px 3px;
+  border-top: 1px solid white;
+  border-bottom: 1px solid #999;
+  border-left: 1px solid white;
+  border-right: 1px solid #999;
+  position: relative; 
+  background-color: #ececec;
+  background-image: -webkit-gradient(linear, left top, left bottom, from(#ececec), to(#acacac)); /* Saf4+, Chrome */
+  background-image: -webkit-linear-gradient(top, #ececec, #acacac); /* Chrome 10+, Saf5.1+ */
+  background-image:    -moz-linear-gradient(top, #ececec, #acacac); /* FF3.6 */
+  background-image:     -ms-linear-gradient(top, #ececec, #acacac); /* IE10 */
+  background-image:      -o-linear-gradient(top, #ececec, #acacac); /* Opera 11.10+ */
+  text-shadow: 0 1px 0 white;
+}
+#buttons > div > div:hover {
+  background: #eee;
+}
+
+#buttons > div > div, #chars > div > div {
+	cursor: pointer;
+}
+
+#buttons > div > div > * {
+	display: inline-block;
+}
+
+#buttons > div > div > span {
+	font-size: 20px;
+}
+
+#buttons > div > div > em {
+	position: absolute;
+	right: 12px;
+	top: 10px;
+}
+
+#buttons > div > div > strong {
+	opacity: 0; 
+	position: absolute;
+	left: 50%;
+	margin-left: -50px;
+	z-index: 2;
+	color: black;
+	top: -10px;
+	width: 100px;
+	height: 70px;
+	text-align: center;
+	font-size: 50px;
+	line-height: 70px;
+	background: white;
+	-moz-box-shadow: 0 0 20px rgba(0,0,0,0.5);
+	-webkit-box-shadow: 0 0 20px rgba(0,0,0,0.5);
+	box-shadow: 0 0 20px rgba(0,0,0,0.5);
+	-webkit-border-radius: 12px;
+	-moz-border-radius: 12px;
+	border-radius: 12px;
+	-webkit-transition: all 0.2s ease;
+	-moz-transition: all 0.2s ease;
+	-o-transition: all 0.2s ease;
+}
+
+#buttons > div > div:hover > strong {
+	opacity: 1;
+}
+
+#the-meat {
+	display: inline-block;
+	width: 80%; 
+	position: relative; 
+	padding: 10px 0 13px 0; 
+}
+#this-is-it-baby {
+	width: 600px;
+	display: inline-block;
+	padding: 10px;
+	vertical-align: middle;
+	font: 24px Monaco, MonoSpace;
+	font-size: 24px;
+	height: auto;
+}
+
+#clear {
+	border: 0;
+	color: white;
+  background: none;
+  font-family: "ronnia-1","ronnia-2";
+	font-size: 14px;
+	position: absolute;
+	right: -5px;
+	top: 43px;
+	cursor: pointer;
+}
+#clear:hover {
+  background: red;
+}
+
+.year  { color: hsla(360, 75%, 15%, 1); }
+.month { color: hsla(360, 75%, 25%, 1); }
+.week  { color: hsla(360, 75%, 35%, 1); }
+.day   { color: hsla(360, 75%, 45%, 1); }
+.date  { color: hsla(360, 75%, 55%, 1); }
+
+.hour    { color: hsla(213, 75%, 15%, 1); }
+.minute  { color: hsla(213, 75%, 20%, 1); }
+.second  { color: hsla(213, 75%, 25%, 1); }
+.milli   { color: hsla(213, 75%, 30%, 1); }
+.ampm    { color: hsla(213, 75%, 35%, 1); }
+.time    { color: hsla(213, 75%, 40%, 1); }
+.zone    { color: hsla(213, 75%, 45%, 1); }
+.special { color: hsla(213, 75%, 50%, 1); }
+
+#chars {
+	text-align: center;
+	padding: 3px 0 15px 0; 
+}
+
+#chars div {
+	display: inline-block;
+	background: #ccc;
+	background-color: #ececec;
+  background-image: -webkit-gradient(linear, left top, left bottom, from(#ececec), to(#acacac)); /* Saf4+, Chrome */
+  background-image: -webkit-linear-gradient(top, #ececec, #acacac); /* Chrome 10+, Saf5.1+ */
+  background-image:    -moz-linear-gradient(top, #ececec, #acacac); /* FF3.6 */
+  background-image:     -ms-linear-gradient(top, #ececec, #acacac); /* IE10 */
+  background-image:      -o-linear-gradient(top, #ececec, #acacac); /* Opera 11.10+ */
+  text-shadow: 0 1px 0 white;
+	padding: 10px;
+	width: 60px;
+}
+
+#chars div:hover {
+	background: #eee;
+}
+p {
+	color:#fff;
+}
+
+p a {
+	color:#fff;
+}
