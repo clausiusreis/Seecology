@@ -2,8 +2,9 @@
 
 ## A visualization framework for acoustic ecology applications
 
-Author: Clausius Duque Reis - UFV-CRP/ICMC-USP (clausiusreis@gmail.com)
-Advisor: Maria Cristina Ferreira de Oliveira - ICMC-USP
+Author: Clausius Duque Reis - UFV-CRP/ICMC-USP (clausiusreis@gmail.com).
+
+Advisor: Maria Cristina Ferreira de Oliveira - ICMC-USP.
 
 Seecology is a framework for feature extraction of ecological recordings, providing easy visualization of the resulting data immediately after the extraction process. This solution provides a single method to extract data, providing individual settings for each feature and several normalization methods to help researchers.
 
