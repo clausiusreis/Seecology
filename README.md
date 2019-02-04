@@ -15,7 +15,9 @@ Among the visualizations available at this moment, we provide a comparative line
 More visualizations will be added in the next few months.
 
 ## Citation
-Research published about the content of this framework...
+Research published about the content of this framework:
+
+[A Visualization Framework for Feature Investigation in Soundscape Recordings](https://www.researchgate.net/publication/327390554_A_Visualization_Framework_for_Feature_Investigation_in_Soundscape_Recordings): September 2018 ([DOI: 10.1109/iV.2018.00091](http://dx.doi.org/10.1109/iV.2018.00091))
 
 ## Installation procedures
 Inside the code there are a installation shell script (Seecology/Install/SETUP_Seecology.sh) created to work on a Linux Mint 19.1 Cinnamon machine. The code should be able to run on most machines, provided that libraries versions are respected.
