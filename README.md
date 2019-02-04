@@ -22,5 +22,8 @@ Research published about the content of this framework:
 ## Installation procedures
 Inside the code there are a installation shell script (Seecology/Install/SETUP_Seecology.sh) created to work on a Linux Mint 19.1 Cinnamon machine. The code should be able to run on most machines, provided that libraries versions are respected.
 
+## Tutorial
+Currently in development, will be available shortly. 
+
 ## Acknowledgment
 We like to acknowledge the financial support of the São Paulo State Research Foundation (FAPESP grants 2017/05838-3 and 2016/02175-0) and the National Council for Scientific and Technological Development (CNPq grant 301847/2017-7). The views expressed do not reflect the official policy or position of either FAPESP or CNPq.
