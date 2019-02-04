@@ -1,0 +1,457 @@
+
+<!-- MAIN SCREEN -->
+
+<html>
+    <head>
+        <meta charset='utf-8'>
+        <link rel="shortcut icon" href="static/favicon.ico">
+        <link rel="stylesheet" type="text/css" href="static/css/stylePage.css">
+        <link rel="stylesheet" type="text/css" href="static/css/stylesMenus.css">
+        <link rel="stylesheet" type="text/css" href="static/css/popup.css">
+        <link rel="stylesheet" type="text/css" href="static/libs/jquery-ui/jquery-ui.css">
+
+        <script src="static/libs/jquery.js" type="text/javascript"></script>
+        <script src="static/libs/jquery-ui/jquery-ui.js" type="text/javascript"></script>
+
+        <script src="static/pageFunctions.js" type="text/javascript"></script>
+
+        <script src="static/visComponents/LabelMaker/LabelMakerBoat24h.js"></script>
+        <script src="static/visComponents/LabelMaker/LabelMakerBoat.js"></script>
+        <script src="static/visComponents/LineChart/linechartBoat24h.js"></script>
+        <script src="static/visComponents/LineChart/linechartBoat.js"></script>
+
+
+		<style>
+			body{
+				font-family: "Trebuchet MS", sans-serif;
+				margin: 8px;
+			}
+		
+        	.DivWithScroll{
+        	    overflow:scroll;
+        	    overflow-x:hidden;
+        	}
+        	
+        	.overflow { height: 300px; }
+		</style>
+
+        <script src="static/libs/d3.v4.js" type="text/javascript"></script>
+        
+        <title>Seecology - Data Visualization Framework for Soundscape Ecology Applications</title>
+    </head>
+
+    <body>
+        <!-- ########################################################################################################################## -->
+        <!-- ### MENU BEGIN ########################################################################################################### -->
+        <!-- ########################################################################################################################## -->
+        
+        <div id='cssmenu'>
+            <ul>
+                <li><a href='/'><span>HOME</span></a></li>
+                
+                <li><a href='#'><span>Contact</span></a>
+                    <ul>
+                        <li><a href='mailto:clausiusreis@gmail.com?Subject=Seecology_Framework'><span>Clausius Duque G. Reis (Author)</span></a></li>	              
+                        <li><a href='mailto:cristina@icmc.usp.br?Subject=Seecology_Framework'><span>Maria Cristina F. de Oliveira (Advisor)</span></a></li>
+                    </ul>
+                </li>
+
+                <li><a href=''><span id="dirtxt"></span></a></li>
+            </ul>
+        </div>
+        
+
+        <!-- ########################################################################################################################## -->
+        <!-- ### MENU END ############################################################################################################# -->
+        <!-- ########################################################################################################################## -->        
+
+<!-- ########################################################################################################################## -->
+<!-- ### PAGE CONTENT START ################################################################################################### -->
+<!-- ########################################################################################################################## -->
+<div id="csscontent">
+
+    <div id="title" class="roundDiv" align="center">
+
+    <div style="position:relative;">
+			<div id="features" style="position: absolute; width: 500px; height: 33px; float: left; background-color: white; border-right:1px solid black; border-bottom:1px solid black;">
+				&nbsp;<b>24H Spectrogram List:</b>
+				<select name="daylist" id="daylist"></select>
+			</div>
+
+			<div id="samples" class="DivWithScroll" style="position: absolute; top:34px; width: 500px; height: 460px; background-color: white; border-right:1px solid black;">
+				<div id="spec2" style='display: inline;'>
+					<div>
+						<div id="spectrogram2"></div>
+						<div id="linechart2"></div>					
+					</div>
+				</div>
+
+				&nbsp;<b>Sample selection:</b><br>
+				
+				<div align="center">
+					<select name="selectionFiles" id="selectionFiles" size=10 style="width:418px;" onchange="openSpecFile(this.value)"></select>
+				</div>
+			</div>
+		</div>
+
+		<div id="boatvis" style="width: 685px; height: 100%; float: right; background-color: white;">
+			<div id="spec1" style='display: inline;'>
+				<div>
+					<div id="spectrogram1"></div>
+					<div id="linechart1"></div>					
+				</div>
+			</div>
+		</div>
+    
+    </div>
+
+</div>
+<!-- ########################################################################################################################## -->
+<!-- ### PAGE CONTENT END ##################################################################################################### -->
+<!-- ########################################################################################################################## -->
+
+
+
+<script>
+//##########################################################################################################
+//### Page Functions #######################################################################################
+//##########################################################################################################
+
+//var newWidth = $("#csscontent").width();
+//var newHeight = $("#csscontent").height();
+//$("#chartlist").height(newHeight-183);
+
+var contentWidth = document.getElementById("csscontent").clientWidth;
+var contentHeight = document.getElementById("csscontent").clientHeight;
+
+$("#title").width(contentWidth-10);
+$("#title").height(contentHeight-25);
+
+
+var currentPath = "";
+
+if ("{{currentPath}}" != ""){
+    document.getElementById("dirtxt").innerHTML = 
+        "<font color='yellow'>Current path:&nbsp;</font><font color='lightgreen'>{{currentPath}}</font>";
+    currentPath = "{{currentPath}}";
+};
+
+
+
+/*
+function fileExists(url){
+    var http = new XMLHttpRequest();
+    http.open('HEAD', url, false);
+    http.send();
+    return http.status!=404;
+}
+
+function updateLabels(){	
+    if (fileExists('http://localhost:{{port}}/Extraction/features_labels.csv')){
+        
+    }
+}
+*/
+
+
+//Start the jquery-ui widgets
+$( "#daylist" ).selectmenu().selectmenu("menuWidget").addClass("overflow");
+
+$( "#daylist" ).selectmenu({
+	change: function( event, ui ) {
+		
+		specFile = "http://localhost:{{port}}/Extraction/24hSpectrogram/SpecPeriod_" + $( "#daylist" ).find(':selected').text() + ".png";
+		specFileCSV = specFile.substr(0,specFile.length-4)+".csv";
+		
+		//console.log(csvSummaryFile);
+		//console.log(specFile);
+		//console.log(specFileCSV);
+		
+		updateVizualization(csvSummaryFile, specFile, specFileCSV);
+	}
+});
+
+var firstLoad = true;
+
+//Defino a altura da DIV samples dinamicamente
+var elem = document.getElementById('samples');
+elem.style.height = (contentHeight - 54) + "px";
+
+//Defino a largura da DIV radviz dinamicamente
+var elem = document.getElementById('boatvis');
+elem.style.width = (contentWidth - 495) + "px";
+
+//Specrogram image change function
+function changeImage1(newImg) {
+    document.getElementById("imgSpectrogram1").src = newImg;
+};
+
+var labelMaker1 = LabelMakerBoat24h()
+ 	.$el(d3.select("#spectrogram1"));
+
+var line1 = linechartBoat24h()
+	.$el(d3.select("#linechart1"))
+	.width(800)
+	.height(60) // Set height
+	.color("red") // Set color
+	//.data(getData()) // Set data
+	.transitionTime(300)
+	.mean(0)
+	.render();
+	
+var labelMaker2 = LabelMakerBoat()
+	.$el(d3.select("#spectrogram2"))
+	.width(380)
+	.height(190);
+
+var line2 = linechartBoat()
+	.$el(d3.select("#linechart2"))
+	.width(380)
+	.height(60) // Set height
+	.color("red") // Set color
+	//.data(getData()) // Set data
+	.transitionTime(300)
+	.mean(0)
+	.render();
+
+function updateVizualization(csvSummaryFile1, specFile1, specFileCSV1){		
+	//document.getElementById("boatvis").innerHTML = "Boat visualization";
+	removeOptions(document.getElementById("selectionFiles"));
+	
+	specFile = specFile1;
+	specFileCSV = specFileCSV1;
+	
+	if (firstLoad == false) {
+	    // Show spectrogram
+	    d3.csv(specFileCSV1, function(loadedRows) {
+			var rows = loadedRows;
+			
+			var fromData = rows[0].from;
+			var toData = rows[0].to;
+			var maxFreq = rows[0].maxFreq;
+			
+			//TODO: Transformar o labelmaker para usar as datas de início e fim, bem como o 
+			labelMaker1
+				.minFreq(0)
+				.maxFreq(maxFreq)
+				.sampleWindow(1)
+				.audioSeconds(60*24) //Está em minutos        
+				.specImg(specFile1)
+				.currentSample(-10)
+				.fromData(fromData)
+				.toData(toData)			
+				.render();
+			
+			labelMaker2
+				.minFreq(0)
+				.maxFreq(maxFreq)
+				.sampleWindow(60)
+				.audioSeconds(60*15) //Está em minutos        
+				.specImg("static/images/emptySpec.png")
+				.currentSample(-10)	
+				.render();
+	    });
+	};
+
+    // Show line chart
+    d3.csv(csvSummaryFile, function (error, data) {    	
+		
+//     	if (firstLoad == true) {
+// 	    	data.forEach(function(d){
+// 	    		var select = document.getElementById('daylist');
+// 	    		if (previousDay.substr(0,10) != d.Filename.substr(0,10)){
+// 	    			var opt = document.createElement('option');
+// 	    		    opt.value = d.Filename;
+// 	    		    opt.innerHTML = d.Filename.substr(0,10);
+// 	    		    select.appendChild(opt);
+// 	    		}
+// 	    		previousDay = d.Filename;
+// 	    	});
+// 	    	$( "#daylist" ).selectmenu("refresh");
+// 	    	firstLoad = false;
+//     	}
+    	
+    	//TODO: Filtrar o dia pelo substring do Filename
+		data1 = data.filter(function (d) {
+			var fn = d.Filename;
+			fn = fn.substr(0, 10);
+			var fn1 = specFile.substr(-14,);
+			fn1 = fn1.substr(0,fn1.length-4);
+			
+			//console.log(fn, fn1);
+			
+		    return fn == fn1;
+		});
+		
+		//console.log(data1);
+    	
+		//TODO: Preencher o line chart com os dados de detecção de embarcação
+		data1.forEach(function (d, i) {
+			d.x = +d['IndexSpec'];
+			d.y = +d['NumPeaks'];
+		});
+		
+		line1.data(data1).render();
+		//line1.mean(0).data(data1).render();
+		//meanValue = d3.mean(singleData1Mean, function(d) { return +d.y });		
+		//line1.mean(meanValue).data(singleData1).render();
+	});
+}
+
+function removeOptions(selectbox)
+{
+    var i;
+    for(i = selectbox.options.length - 1 ; i >= 0 ; i--)
+    {
+        selectbox.remove(i);
+    }
+};
+
+function fillSelection(samples){
+	//document.getElementById("selectionFiles").innerHTML = "Boat visualization";
+	removeOptions(document.getElementById("selectionFiles"));
+	 
+	
+	Array.prototype.contains = function(obj) {
+	    var i = this.length;
+	    while (i--) {
+	        if (this[i] == obj) {
+	            return true;
+	        }
+	    }
+	    return false;
+	}
+	
+	d3.csv(csvSummaryFile, function (error, data) {    	
+
+    	//TODO: Filtrar o dia pelo substring do Filename
+		data1 = data.filter(function (d) {
+			var fn = d.Filename;
+			fn = fn.substr(0, 10);
+			var fn1 = specFile.substr(-14,);
+			fn1 = fn1.substr(0,fn1.length-4);
+			
+			//console.log(fn, fn1);
+			
+		    return fn == fn1;
+		});
+		
+		data2 = data1.filter(function (d) {
+		    return samples.contains(d.IndexSpec);
+		});
+
+		//TODO: Preencher o line chart com os dados de detecção de embarcação
+		var previousDay = "";
+		data2.forEach(function (d, i) {
+
+   		 	var select = document.getElementById('selectionFiles');
+			if (previousDay != d.Filename){
+				var opt = document.createElement('option');
+			    opt.value = d.Filename;
+			    opt.innerHTML = d.Filename;
+			    select.appendChild(opt);
+			}
+			previousDay = d.Filename;
+
+		});
+	});
+};
+
+function openSpecFile(value){
+	
+	var specFile1 = "http://localhost:{{port}}/Extraction/BoatSpectrogram/" + value.substr(0,value.length-4) + ".png";
+	
+	// Show spectrogram
+    d3.csv("http://localhost:{{port}}/Extraction/BoatSpectrogram/" + value.substr(0,value.length-4) + ".csv", function(loadedRows) {
+		var rows = loadedRows;
+		
+		var fromData = rows[0].sampleWindow;
+		var toData = rows[0].audioSeconds;
+		var maxFreq = rows[0].maxFreq;
+		
+		labelMaker2
+			.minFreq(0)
+			.maxFreq(maxFreq)
+			.sampleWindow(60)
+			.audioSeconds(60*15) //Está em minutos        
+			.specImg(specFile1)
+			.currentSample(-10)	
+			.render();
+    });
+	
+ 	// Show line chart
+    d3.csv("http://localhost:{{port}}/Extraction/Detection/" + value.substr(0,value.length-4) + "_info.csv", function (error, data) {    			   	
+		
+		//TODO: Preencher o line chart com os dados de detecção de embarcação
+		data.forEach(function (d, i) {
+			d.x = +d['Minute']*60;
+			d.y = +d['NumPeaks'];
+		});
+		
+        data.push(
+            {
+                Cluster: data[data.length-1].Cluster,
+                Detection: data[data.length-1].Detection,
+                DistFreqs: data[data.length-1].DistFreqs,
+                Filename: data[data.length-1].Filename,
+                HighFreq: data[data.length-1].HighFreq,
+                LowFreq: data[data.length-1].LowFreq,
+                Minute: data[data.length-1].Minute,
+                Multiple: data[data.length-1].Multiple,
+                NumPeaks: data[data.length-1].NumPeaks,
+                SD: data[data.length-1].SD,
+                x: data[data.length-1].x + 60,
+                y: data[data.length-1].y
+            }
+        );
+
+		line2.data(data).render();
+		//line1.mean(0).data(data1).render();
+		//meanValue = d3.mean(singleData1Mean, function(d) { return +d.y });		
+		//line1.mean(meanValue).data(singleData1).render();
+	});
+};
+
+
+// ##########################################################################################################
+// ### On page load #########################################################################################
+// ##########################################################################################################
+
+
+
+//var currentPath = "http://localhost/PAPER_Boat/PAPER_Boat_Data_PEMLS/";
+var csvSummaryFile = "http://localhost:{{port}}/Extraction/BoatDetectionSummary.csv";
+var specFile = "";
+var specFileCSV = "";
+
+var previousDay = "";
+d3.csv(csvSummaryFile, function (error, data) {    		
+	
+	if (firstLoad == true) {
+		firstItem = "";
+    	data.forEach(function(d){
+    		var select = document.getElementById('daylist');
+    		if (previousDay != d.Date){
+    			var opt = document.createElement('option');
+    		    opt.value = d.Filename;
+    		    opt.innerHTML = d.Date;
+    		    select.appendChild(opt);    		    
+    		}
+    		previousDay = d.Date;
+    		if (firstItem == ""){
+    			firstItem = d.Date;
+    		}
+    	});
+    	$( "#daylist" ).selectmenu("refresh");    	
+    	firstLoad = false;
+    	
+    	specFile = "http://localhost:{{port}}/Extraction/24hSpectrogram/SpecPeriod_" + firstItem + ".png";
+    	specFileCSV = specFile.substr(0,specFile.length-4)+".csv";
+    	updateVizualization(csvSummaryFile, specFile, specFileCSV);
+	}
+});
+
+</script>
+
+</body>
+</html>

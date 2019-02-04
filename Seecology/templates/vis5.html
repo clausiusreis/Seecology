@@ -4,7 +4,7 @@
 <html>
     <head>
         <meta charset='utf-8'>
-
+        <link rel="shortcut icon" href="static/favicon.ico">
         <link rel="stylesheet" type="text/css" href="static/css/stylePage.css">
         <link rel="stylesheet" type="text/css" href="static/css/stylesMenus.css">
         <link rel="stylesheet" type="text/css" href="static/css/popup.css">
@@ -416,7 +416,7 @@ wavesurfer.load('static/images/emptySpec.mp3');
                       <form name="labelForm" id="labelForm">
                           <input type="hidden" id="labelName" name="labelName">
                           <input type="hidden" id="labelList" name="labelList">
-                          <b><font size="6">ADD NEW LABEL (Without spaces):&nbsp;</font></b><input type="text" id="labelName1" name="labelName1">
+                          <b><font size="4">ADD NEW LABEL (Without spaces):&nbsp;</font></b><input type="text" id="labelName1" name="labelName1">
                           <input name="submit" id="submit" type="submit" value="Add label">
                       </form>
                   </div>
@@ -865,8 +865,6 @@ function updateRadviz(layers, labels=[]){
 updateRadviz(layers);
 
 var data = [];
-updateGrid(data);
-
 //Cria os labels que estão selecionados no checkbox "cb_labels"
 $("#labelForm").on('submit', function (e) {
     e.preventDefault();
@@ -881,8 +879,8 @@ $("#labelForm").on('submit', function (e) {
        }
     });
     
-    console.log("labelName",labelName);
-    console.log("labelList",selected.join(";"));
+    //console.log("labelName",labelName);
+    //console.log("labelList",selected.join(";"));
     
     $("#labelName").val(labelName);
     $("#labelList").val(selected.join(";"));
@@ -920,7 +918,7 @@ function buildTableLabels(headerNames) {
 	var thead = document.createElement("thead");
 	var tbody = document.createElement("tbody");
 	var headRow = document.createElement("tr");
-	["Label name","enable","Color","Remove"].forEach(function(el) {
+	["Label name","Enabled","Color","Remove"].forEach(function(el) {
 		  var th=document.createElement("th");
 		  th.appendChild(document.createTextNode(el));
 		  headRow.appendChild(th);
@@ -972,11 +970,29 @@ function buildTableLabels(headerNames) {
         
         //Button Remove
         var td = document.createElement("td");
+        td.style.width = 90;
         var button = document.createElement('button');
         button.innerHTML = 'Remove Label';
         button.onclick = function(){            
-            console.log("remove label");
-
+            console.log(el);
+        
+            if (confirm("Do you confirm the removal of the label: "+el+"?")) {
+                $("#labelName").val(el);
+                $("#labelList").val([]);        
+                $.ajax({
+                    type: "POST",
+                    url: "/removeLabels",
+                    dataType: "json",
+                    data: $("#labelForm").serialize(),
+                    //beforeSend: function() {
+                    //    $('#result').html('<img src="loading.gif" />');
+                    //},
+                    success: function(result) {
+                        updateLabels();
+                    }
+                });
+            };
+        
             return false;
         };
         td.appendChild(button);

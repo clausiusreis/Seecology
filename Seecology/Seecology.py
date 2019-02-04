@@ -5,7 +5,7 @@
 
 import json
 import os
-import subprocess
+#import subprocess
 import sys
 import shutil
 import numpy as np
@@ -14,26 +14,32 @@ import random, threading, webbrowser
 import pandas as pd
 import Tkinter, tkFileDialog
 import matplotlib.pyplot as plt
-import matplotlib.patches as mpatches
+#import matplotlib.patches as mpatches
 import librosa
-from librosa import display
+#from librosa import display
 import soundfile as sf
 #import pywt
-from scipy.signal import spectrogram
+#from scipy.signal import spectrogram
 import scipy.misc
 import csv
-import copy
+#import copy
 import time
+#import scipy.cluster.hierarchy as sch
+#from scipy.cluster.hierarchy import fcluster
+#from scipy import spatial
+#from scipy import signal
+from datetime import datetime
+from datetime import timedelta
+import copy
 import scipy.cluster.hierarchy as sch
 from scipy.cluster.hierarchy import fcluster
 from scipy import spatial
-from scipy import signal
-from datetime import datetime
 
 # External http server to provide access to files on the chosen path
 from threading import Thread
-import http.server
-import socketserver
+#import http.server # Python3
+import SimpleHTTPServer
+import SocketServer
 
 ### External functions
 sys.path.append("scripts")
@@ -44,7 +50,7 @@ import Features
 ### Unify and normalize the individual files
 #import UnifiedCSVGenerator as UG
 
-app = Flask('clausius')
+app = Flask('Seecology_ClausiusReis')
 
 print("### "+app.instance_path)
 
@@ -53,6 +59,17 @@ global currentPath
 global numCurrentFile
 global numCurrentSpectrogram
 global numFiles
+global numFiles24h
+global numFilesSpec24h
+global numCurrentFiles24h
+global numCurrentFilesSpec24h
+
+global extractSpectrograms24h
+global maximumFrequency24h
+global sampleWindow24h
+global audioChannel
+global dateFormat24h
+global numCurrentSpectrogram24h
 
 global SDThreshold
 global plotImages
@@ -69,12 +86,16 @@ currentPath = ""
 numCurrentFile = 1
 numCurrentSpectrogram = 1
 numFiles = 0
+numFiles24h = 0
+numFilesSpec24h = 0
+numCurrentFiles24h = 0
+numCurrentFilesSpec24h = 0
 SDThreshold = 1.5
 plotImages = True
 extractSpectrograms = False
 #initialDirectory="~/Documents/DOUTORADO/TEST_DATABASE"
 #initialDirectory="/home/clausius/public_html/DOUTORADO_Visualizations_Framework/testData"
-initialDirectory="/home/clausius/Documents/DOUTORADO/TEST_DATABASE/teste3"
+initialDirectory="/home/clausius/Documents/DOUTORADO/DadosTeste/PEMLS"
 
 # Start page
 @app.route("/", methods=['GET', 'POST'])
@@ -127,7 +148,7 @@ def vis6_page():
     
 @app.route("/vis7", methods=['GET', 'POST'])
 def vis7_page():
-    return render_template("vis7.html", currentPath = currentPath, port=serverport+10)    
+    return render_template("vis7.html", currentPath = currentPath, port=serverport+10)
     
 @app.route("/vis8", methods=['GET', 'POST'])
 def vis8_page():
@@ -160,16 +181,53 @@ def getCurrentPath():
 
     return jsonify({"currentPath": currentPath, "status": "Working directory selected", "flags": flags})
 
+@app.after_request
+def add_header(r):
+    """
+    Add headers to both force latest IE rendering engine or Chrome Frame,
+    and also to cache the rendered page for 10 minutes.
+    """
+    r.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    r.headers["Pragma"] = "no-cache"
+    r.headers["Expires"] = "0"
+    r.headers['Cache-Control'] = 'public, max-age=0'
+    return r
+
 ################################################################################################################
 ### HTTP SERVER - Start ########################################################################################
 ################################################################################################################
-class HTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
+#class HTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
+#    def end_headers(self):
+#        self.send_header('Access-Control-Allow-Origin', '*')
+#        http.server.SimpleHTTPRequestHandler.end_headers(self)
+#
+#def server(port):
+#    httpd = socketserver.TCPServer(('', port), HTTPRequestHandler)
+#    return httpd
+#
+#def servidor():    
+#    global serverport
+#    global currentPath
+#
+#    os.chdir(currentPath)
+#    
+#    httpd = server(serverport+10)
+#    try:        
+#        os.chdir(currentPath)
+#        print("\nServing at localhost:" + str(serverport+10))
+#        httpd.serve_forever()
+#    except KeyboardInterrupt:
+#        print("\n...shutting down http server")
+#        httpd.shutdown()
+#        sys.exit()    
+    
+class HTTPRequestHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
     def end_headers(self):
         self.send_header('Access-Control-Allow-Origin', '*')
-        http.server.SimpleHTTPRequestHandler.end_headers(self)
+        SimpleHTTPServer.SimpleHTTPRequestHandler.end_headers(self)
 
 def server(port):
-    httpd = socketserver.TCPServer(('', port), HTTPRequestHandler)
+    httpd = SocketServer.TCPServer(('', port), HTTPRequestHandler)
     return httpd
 
 def servidor():    
@@ -186,26 +244,17 @@ def servidor():
     except KeyboardInterrupt:
         print("\n...shutting down http server")
         httpd.shutdown()
-        sys.exit()    
-    
-#    Handler = http.server.SimpleHTTPRequestHandler
-#    
-#    self.send_header('Access-Control-Allow-Origin', '*')    
-#    Handler.end_headers(self)
-#
-#    httpd = socketserver.TCPServer(("", serverport+10), Handler)
-#    print("serving at port", serverport+10, currentPath)
-#    httpd.serve_forever()
+        sys.exit() 
 
 ################################################################################################################
-### HTTP SERVER - Start ########################################################################################
+### HTTP SERVER - End ##########################################################################################
 ################################################################################################################
 
-
+#TODO: Corrigir esta função
 def removeOutliersFromData(data):
     l = data.shape[0];
     c = data.shape[1];    
-        
+    
     # Only show data within 3 standard deviations of the mean. 
     # If data is normally distributed 99.7% will fall in this range.        
     for j in range(1, c):
@@ -215,15 +264,15 @@ def removeOutliersFromData(data):
         for i in range(0, l):
             auxsum += data[data.columns[j]][i];
             auxsumsq += data[data.columns[j]][i] * data[data.columns[j]][i];
-    
+
         mean = auxsum / l;
         variance = auxsumsq / l - mean * mean;
         sd = np.sqrt(variance);
-        
+
         for i in range(0, l):
             if ( (data[data.columns[j]][i] > (mean + 3 * sd)) | (data[data.columns[j]][i] < (mean - 3 * sd)) ):
                 data[data.columns[j]][i] = mean;
-
+        
     return data;
 
 def unifyCSV(mainPath, 
@@ -616,6 +665,1020 @@ def groupFeatures(feat, fileIdent, fileDateTimeMask, GENERAL_timeWindow):
     resultMat['SecondsFromStart'] = col3
     
     return resultMat, selectedColNames
+
+
+###########################################################################################################
+### Smooth function to allow simple detection within spectrogram
+###########################################################################################################
+def smooth(x,window_len=11,window='hanning'):
+    if x.ndim != 1:
+        raise ValueError, "smooth only accepts 1 dimension arrays."
+    if x.size < window_len:
+        raise ValueError, "Input vector needs to be bigger than window size."
+    if window_len<3:
+        return x
+    if not window in ['flat', 'hanning', 'hamming', 'bartlett', 'blackman']:
+        raise ValueError, "Window is on of 'flat', 'hanning', 'hamming', 'bartlett', 'blackman'"
+    s=np.r_[2*x[0]-x[window_len-1::-1],x,2*x[-1]-x[-1:-window_len:-1]]
+    if window == 'flat': #moving average
+        w=np.ones(window_len,'d')
+    else:
+        w=eval('np.'+window+'(window_len)')
+        y=np.convolve(w/w.sum(),s,mode='same')
+    return y[window_len:-window_len+1]  
+
+###########################################################################################################
+### Algoritmo de detecção por variação da amplitude e desvio padrão (Minuto)
+###########################################################################################################
+def extractBoatSignatures():
+    global SDThreshold
+    global timeToProcess
+    global meanTimeToProcess
+    global meanTimeToProcessSpec
+    global plotImages
+    global extractSpectrograms
+    global audioChannel
+    
+    sumTimeFiles = 0
+    sumTimeSpectrograms = 0
+    timeStart = time.time()
+    print("###############################################################")
+    print("### Process Started ###########################################")
+    print("###############################################################")
+
+    ###########################################################################################################
+    ### Variáveis de configuração
+    ###########################################################################################################
+    #audioChannel = 0
+    topDB = 50
+    W = 13
+    H = 5
+    #plotImages = True
+    #extractSpectrograms = True
+
+    global currentPath
+    global numCurrentFile
+    global numCurrentSpectrogram
+    global numFiles
+    global maximumFrequency
+    global dateFormat24h
+    
+    ###########################################################################################################
+    ### Create the necessary directories
+    ###########################################################################################################
+    outputPath = "/".join([currentPath, "Extraction"])
+    if (os.path.isdir(outputPath) == False):
+        os.system("mkdir %s" % (outputPath))
+    
+    outputPath = "/".join([currentPath, "Extraction", "BoatSpectrogram"])
+    if (os.path.isdir(outputPath) == False):
+        os.system("mkdir %s" % (outputPath))
+    
+    outputPath = "/".join([currentPath, "Extraction", "DetectionImg"])
+    if (os.path.isdir(outputPath) == False):
+        os.system("mkdir %s" % (outputPath))    
+    
+    outputPath = "/".join([currentPath, "Extraction", "Detection"])
+    if (os.path.isdir(outputPath) == False):
+        os.system("mkdir %s" % (outputPath))    
+    
+    #outputPath = "/".join([currentPath, "Extraction", "DetectionSignature"])
+    #if (os.path.isdir(outputPath) == False):
+    #    os.system("mkdir %s" % (outputPath))    
+        
+    #outputPath = "/".join([currentPath, "Extraction", "DetectionInfo"])
+    #if (os.path.isdir(outputPath) == False):
+    #    os.system("mkdir %s" % (outputPath))
+
+    #outputPath = "/".join([currentPath, "Extraction", "DetectionSpectrum"])
+    #if (os.path.isdir(outputPath) == False):
+    #    os.system("mkdir %s" % (outputPath))
+        
+    #outputPath = "/".join([currentPath, "Extraction", "DetectionVariance"])
+    #if (os.path.isdir(outputPath) == False):
+    #    os.system("mkdir %s" % (outputPath))
+    
+    # Reset the extraction error report
+    with open("/".join([currentPath, "Extraction/PROCESSING_ERROR_BoatDetection.log"]), "w") as myfile:
+        myfile.write("####################################################\n")
+        myfile.write("### ERROR REPORT - Seecology                     ###\n")
+        myfile.write("####################################################\n")    
+    
+    ###########################################################################################################
+    ### List all the allowed files on the directory
+    ###########################################################################################################
+    wdir = os.listdir("%s" % (currentPath))
+    wdir.sort()
+    currentFiles = [arq for arq in wdir if (arq.lower().endswith(".wav") | 
+                                            arq.lower().endswith(".raw") | 
+                                            arq.lower().endswith(".flac"))]
+
+    numFiles = len(currentFiles)
+
+    ##############################################################################################################################
+    ### EXTRACT BOAT SIGNATURE ###################################################################################################
+    ##############################################################################################################################    
+    # Append the boat extraction errors
+    with open("/".join([currentPath, "Extraction/PROCESSING_ERROR_BoatDetection.log"]), "a") as myfile:
+        myfile.write("\n")    
+        myfile.write("### ERROR ON THE EXTRACTION PROCESS ################\n")
+    
+    #Summary file for the visualization control
+    fieldnamesSummary = ['Index', 'IndexSpec', 'Filename', 'Date', 'NumPeaks', 'Detection', 'Multiple']
+    with open("/".join([currentPath, "Extraction/BoatDetectionSummary.csv"]), "w") as BDSummary:        
+        BDSummaryWriter = csv.DictWriter(BDSummary, fieldnames=fieldnamesSummary, delimiter=',')       
+        BDSummaryWriter.writeheader()    
+
+    currentBDSummary = 0
+    currentIndexSpec = 0
+    previousFile = ""
+    normalizationMin = 1000;
+    normalizationMax = -1000;
+    for currentFile in currentFiles:
+        try:        
+            timeFile = time.time()
+            
+            if numCurrentFile <= len(currentFiles):
+                #numCurrentFile = numCurrentFile + 1
+                print("   Processing file %s of %s (%s)" % (numCurrentFile+1, len(currentFiles), currentFile))
+            detectionData = []        
+            boatDetection = []
+            boatDetectionP = []    
+            
+            if currentFile[-4:] == "flac":
+                fileIdent = currentFile[:-5]
+            else:
+                fileIdent = currentFile[:-4]
+        
+            #Load an audio file with separated samplerate, left and right channels
+            frames, rate = sf.read("/".join([currentPath,currentFile]))
+        
+            # Pego um canal apenas
+            if (len(np.shape(frames)) == 1):
+                selChannel = frames
+            else:
+                if (audioChannel == 0):
+                    selChannel = frames[:,0]
+                else:
+                    selChannel = frames[:,1]
+        
+            numMinutes = int(np.ceil((len(frames)/rate)/60))
+            
+            ##############################################################################################################################
+            ### Get the min and max values for normalization 
+            #if extractSpectrograms == True:            
+            #    specRate1 = rate/2
+            #    sampleWindows1 = len(selChannel)/(specRate1)
+            #    specMatrix1 = np.zeros([specRate1/2, sampleWindows1])
+            #    for i in range(sampleWindows1):
+            #        t11 = i*specRate1
+            #        t22 = (i+1)*specRate1
+            #        specMatrix1[:,i] = calculate_spectrum(selChannel[t11:t22], specRate1)            
+    
+            #    if np.min(specMatrix1) < normalizationMin:
+            #        normalizationMin = np.min(specMatrix1)
+            #    if np.max(specMatrix1) > normalizationMax:
+            #        normalizationMax = np.max(specMatrix1)
+            ##############################################################################################################################
+            
+            ##############################################################################################################################
+            ### EXTRACT BOAT DETECTION SIGNATURES ########################################################################################
+            ##############################################################################################################################
+            #fileSpectrumNormal = []        
+            fileSpectrumSmooth = []
+            fileVariances = []
+            for minute in range(numMinutes):
+                sample = selChannel[(rate*60*minute):(rate*60*(minute+1))]
+        
+                ####### TESTE #######
+                # Calcular windowFFT dado o rate (Testar)
+                #windowFFT = int(np.floor(rate / 1.34583))
+                windowFFT = rate
+                if windowFFT%2!=0:
+                    windowFFT += 1
+    
+                # Extract the spectrogram matrix (STFT)
+                #specMatrix = librosa.stft(selChannel, n_fft=windowFFT)
+                specMatrix = librosa.stft(sample, n_fft=windowFFT)
+            
+                # Convert the spectrogram matrix to DB scale
+                specMatrixDB = librosa.amplitude_to_db(specMatrix, ref=np.max, top_db=topDB)
+        
+                # Spectrogram Power
+                #specPower = librosa.db_to_power(specMatrixDB, ref=1.0)
+            
+                #specMatrixDB = specPower
+
+                ###########################################################################################################
+                ### Teste de detecção com eliminação de outliers em DB
+                ###########################################################################################################
+                #SDThreshold = 1.5 # 3 normal, 4 with noise
+                #SDThreshold1 = 1
+                #SDFish = 2
+        
+                specMatrixMean = np.mean(specMatrixDB, axis=1)     
+                #specMatrixMeanS = specMatrixMean        
+                specMatrixMeanS = smooth(np.mean(specMatrixDB, axis=1), window='blackman', window_len=8)
+                #specMatrixMeanSD = np.std(specMatrixMean)
+                specMatrixMeanSD = np.std(specMatrixMeanS)
+        
+                #specPowerMean = np.mean(specPower, axis=1)
+                #specPowerMeanS = smooth(np.mean(specPower, axis=1),32)
+                #specPowerMeanSD = np.std(specPowerMean)
+            
+                freqs = librosa.core.fft_frequencies(sr=rate, n_fft=(windowFFT)+1)
+    
+                #Encontro o índice da frequência menor que 1000Hz
+                maxFreq=0
+                while (freqs[maxFreq] < maximumFrequency):
+                    maxFreq += 1
+        
+                specMatrixMean = specMatrixMean[0:maxFreq]
+                specMatrixMeanS = specMatrixMeanS[0:maxFreq]
+        
+                #fileSpectrumNormal.append(specMatrixMean)
+                fileSpectrumSmooth.append(specMatrixMeanS)
+        
+                # Extraio a variação SD e detecto eventos tipo barco
+                boatDet = np.zeros(len(specMatrixMean))
+                #boatDet1 = np.zeros(len(specMatrixMean))
+                variance = np.zeros(len(specMatrixMean))
+                for i in xrange(5,len(specMatrixMean)-5, 1): # Era 3 o 1
+                    #vAmp = specMatrixMean[i] - specMatrixMean[i+1]
+                    vAmp = specMatrixMeanS[i] - specMatrixMeanS[i+1]
+        
+                    #Teste da detecção apenas da saída ou entrada do pico            
+                    if vAmp > 0:
+                        vAmp = 0
+                    variance[i] = abs(vAmp*vAmp*vAmp) # Adicionei mais um vAmp e abs
+                    #variance[i] = abs(vAmp*vAmp)
+            
+                    # Detecção dos eventos significantes  (o -topDB é só para mostrar, poderia ser 1 e 0)
+                    if (variance[i] >= specMatrixMeanSD * SDThreshold):
+                        for j in xrange(-2,3,1): #-6,7 # Janela de 5 Hz para poder fazer cruzamento de informações na classificação
+                            #if plotImages:                    
+                            #    boatDet[i+j] = -topDB
+                            #else:
+                            boatDet[i+j] = 1
+                    #if (variance[i] >= specMatrixMeanSD * SDThreshold1):
+                    #    for j in xrange(-4,5,1): # Janela de 5 para cada lado para poder fazer cruzamento de informações na classificação
+                    #        if plotImages:                    
+                    #            boatDet1[i+j] = -topDB
+                    #        else:
+                    #            boatDet1[i+j] = 1
+    
+                fileVariances.append(variance)
+        
+                # Ignoring the detections bellow 20Hz e últimas frequências
+                i=0
+                while (freqs[i] < 20):
+                    i += 1
+                boatDet[:i-1] = boatDet[-10:] = 0
+                #boatDet1[:i-1] = boatDet1[-10:] = 0
+                
+                boatDetection.append([currentFile, minute, boatDet])
+                #boatDetectionP.append([currentFile, minute, boatDet1])
+    
+                ##############################################################################################################################
+                ### MULTIPLE SIGNATURES DETECTION ############################################################################################
+                ##############################################################################################################################
+                # Identifico se são múltiplas assinaturas e gero o detectionData
+                sigFreq = []
+                numPeaks = 0
+                previous = 0
+                multipleSignatures = 0
+                for i in range(len(boatDet[:maxFreq])):    
+                    if (boatDet[previous] != 0) & (boatDet[i]==0):
+                        sigFreq.append(i)
+                    previous = i
+    
+                if len(sigFreq) > 0:
+                    numPeaks = len(sigFreq)
+                    if numPeaks > 0:
+                        detectionData.append( [minute ,boatDet.astype(int)] )
+                        
+                if len(detectionData) > 1:                
+                    ### Compute the Distance Matrix
+                    orderMethod = 6
+                    numberOfClusters = 2
+            
+                    dist = np.zeros(shape=(len(detectionData), len(detectionData)))
+                    for x in range(len(detectionData)):
+                        for y in range(len(detectionData)):
+                            dist[x,y] = 1 - spatial.distance.cosine(detectionData[x][1], detectionData[y][1])
+                            
+                    ### Matriz de distância (similaridade) ordenada.
+                    m = ['single', 'complete', 'average', 'weighted', 'centroid', 'median', 'ward']
+                    distMatrix = sch.linkage(dist, method=m[orderMethod])
+                    Z1 = sch.dendrogram(distMatrix, no_plot=True)
+                    featureNameOrderedID = Z1['leaves']
+        
+                    ### Dado um número de clusters classificar os features em grupos.
+                    clusterObj = numberOfClusters
+                    clusterDet = 10000
+                    max_d = 0
+                    while clusterDet > clusterObj:
+                        max_d = max_d + 1
+                        clusters = fcluster(distMatrix, max_d, criterion='distance')
+                        clusterDet = len( range(1, clusters.max()+1 ) )
+                    
+                    clusters = fcluster(distMatrix, max_d, criterion='distance')
+                    
+                    #print(clusters)
+      
+                    i=0
+                    newSignatures = np.zeros(shape=(len(detectionData[0][1]), 2), dtype=np.int8)
+                    for cl in clusters:
+                        newSignatures[:, cl-1] = (np.logical_or(newSignatures[:, cl-1].astype(int), detectionData[i][1].astype(int)) ).astype(int)
+                        i = i+1
+                    
+                    distance = 1 - spatial.distance.cosine(newSignatures[:,0], newSignatures[:,1])
+                    
+                    #print( "###############################################################" )
+                    #print( "### DETECTION #################################################" )
+                    #print( "###############################################################" )
+                    #print( "File: %s" % (currentFile) )
+                    #print( "Distance: %s" % (distance) )
+                    
+                    if distance > 0.6:
+                        #print("Single boat signature")
+                        fileSignature = (np.logical_or(newSignatures[:, 0].astype(int), newSignatures[:, 1].astype(int)) ).astype(int)
+                        multipleSignatures = 0                                                
+                    else:
+                        #print("Multiple boat signatures")
+                        multipleSignatures = 1
+                else:
+                    if len(detectionData) == 1:
+                        #print( "###############################################################" )
+                        #print( "### DETECTION #################################################" )
+                        #print( "###############################################################" )
+                        #print( "File: %s" % (currentFile) )
+                        #print( "Distance: %s" % (1.0) )
+                        #print( "Single boat signature")
+                        multipleSignatures = 0
+                        fileSignature = ( detectionData[0][1] ).astype(int)
+                ###########################################################################################################################
+    
+                if plotImages:
+                    plt.ioff()
+                    
+                    sdPlot = [specMatrixMeanSD * SDThreshold for sx in specMatrixMean]
+                    boatDetVis = copy.copy(boatDet)
+                    boatDetVis[boatDetVis > 0] = -topDB
+                        
+                    fig, ax = plt.subplots()
+                    fig.set_size_inches(W, H)
+                    leg1 = mpatches.Patch(color='red', label="Boat Det. (%s x SD)" % (SDThreshold))
+                    leg3 = mpatches.Patch(color='blue', label="Spectrum dB")
+                    leg4 = mpatches.Patch(color='purple', label='Threshold %s x SD: %s' % (SDThreshold, "%.3f" % (SDThreshold*specMatrixMeanSD) ))
+                    leg5 = mpatches.Patch(color='green', label="Spec. dB Amp. Variance")
+                    plt.legend(handles=[leg1, leg3, leg4, leg5], loc=1)
+                    plt.plot(freqs[:maxFreq], specMatrixMeanS[:maxFreq], lineWidth=0.5, color='blue')
+                    plt.plot(freqs[:maxFreq], sdPlot[:maxFreq], linestyle='--', lineWidth=0.5, color='purple')
+                    plt.plot(freqs[:maxFreq], variance[:maxFreq], lineWidth=0.5, color='green')
+                    plt.fill(freqs[:maxFreq], boatDetVis[:maxFreq], lineWidth=0.5, color='red', alpha=0.5)    
+                    plt.xscale('linear')
+                    plt.title('Boat detection on SD Variance of Spectrum DB Mean: %s (Min. %s)' % (currentFile, minute))
+                    plt.xlabel('Frequency (Hz)')
+                    plt.ylabel('Amplitude (dB)')
+                    
+                    fig.savefig(("%s/Extraction/DetectionImg/%s_M%s.png" % (currentPath, currentFile[:-4], minute)), bbox_inches='tight')
+                    plt.close(fig)        
+    
+            # Save spectrum for each file
+            #with open("%s/Extraction/DetectionSpectrum/%s_Normal.csv" % (currentPath, fileIdent), 'wb') as csvfile:
+            #    spamwriter = csv.writer(csvfile, delimiter=',')
+            #    for sig in fileSpectrumNormal:
+            #        spamwriter.writerow(sig)
+    
+            #with open("%s/Extraction/DetectionSpectrum/%s_Smooth.csv" % (currentPath, fileIdent), 'wb') as csvfile:
+            with open("%s/Extraction/Detection/%s_spectrum.csv" % (currentPath, fileIdent), 'wb') as csvfile:
+                spamwriter = csv.writer(csvfile, delimiter=',')
+                for sig in fileSpectrumSmooth:
+                    spamwriter.writerow(sig)
+                
+            # Save variance for each file
+            #with open("%s/Extraction/DetectionVariance/%s.csv" % (currentPath, fileIdent), 'wb') as csvfile:
+            with open("%s/Extraction/Detection/%s_variance.csv" % (currentPath, fileIdent), 'wb') as csvfile:
+                spamwriter = csv.writer(csvfile, delimiter=',')
+                for sig in fileVariances:
+                    spamwriter.writerow(sig)            
+                
+            # Save signatures for each file
+            #fileSig = np.zeros(len(specMatrixMean))
+            #with open("%s/Extraction/DetectionSignature/%s.csv" % (currentPath, fileIdent), 'wb') as csvfile:
+            with open("%s/Extraction/Detection/%s_signature.csv" % (currentPath, fileIdent), 'wb') as csvfile:
+                spamwriter = csv.writer(csvfile, delimiter=',')
+                #spamwriter.writerow(['Minute'] + range(maxFreq))
+                for sig in boatDetection:
+                    spamwriter.writerow(sig[2].astype(int).astype('S10'))
+                    #fileSig = (np.logical_or(fileSig,sig[2].astype(int))).astype(int)
+        
+            # Save the file signature            
+            #with open("%s/Extraction/DetectionSignature/%s.csv" % (currentPath, fileIdent), 'wb') as csvfile:
+                #spamwriter = csv.writer(csvfile, delimiter=',')        
+                #spamwriter.writerow(fileSig.astype('S10'))
+        
+            # Save signature info for each minute
+            #with open("%s/Extraction/DetectionInfo/%s.csv" % (currentPath, fileIdent), 'wb') as csvfile:
+            with open("%s/Extraction/Detection/%s_info.csv" % (currentPath, fileIdent), 'wb') as csvfile:
+                fieldnames = ['Filename', 'Minute', 'LowFreq', 'HighFreq', 'DistFreqs', 'NumPeaks', 'Detection', 'Multiple', 'Cluster', 'SD']
+                writer = csv.DictWriter(csvfile, fieldnames=fieldnames, delimiter=',')        
+            
+                writer.writeheader()            
+                currentMinute = 0
+                for sig in boatDetection:
+                    sigFreq = []
+                    lowFreq = 0
+                    highFreq = 0
+                    distFreqs = 0
+                    numPeaks = 0
+                    detection = 0
+                    mSig = 0
+        
+                    previous = 0
+                    for i in range(len(sig[2][:maxFreq])):    
+                        if (sig[2][previous] != 0) & (sig[2][i]==0):
+                            sigFreq.append(i)
+                        previous = i
+                    
+                    if len(sigFreq) > 0:
+                        lowFreq = sigFreq[0]
+                        highFreq = sigFreq[len(sigFreq)-1]
+                        distFreqs = highFreq - lowFreq
+                        numPeaks = len(sigFreq)
+                        if numPeaks > 0:
+                            #detectionData.append( [sig[1] ,sig[2].astype(int)] )
+                            detection = 1
+                            if multipleSignatures == 1:
+                                mSig = 1
+                    
+                    clusterID = 0
+                    for dt in range(len(detectionData)):
+                        if detectionData[dt][0] == sig[1]:
+                            clusterID = clusters[dt]
+        
+                    writer.writerow({'Filename': currentFile, 
+                                     'Minute': currentMinute,
+                                     'LowFreq': lowFreq, 
+                                     'HighFreq': highFreq, 
+                                     'DistFreqs': distFreqs, 
+                                     'NumPeaks': numPeaks,
+                                     'Detection': detection,
+                                     'Multiple': mSig,
+                                     'Cluster': clusterID,
+                                     'SD': (specMatrixMeanSD * SDThreshold)})
+
+                    currentMinute = currentMinute + 1
+        
+                    with open("/".join([currentPath, "Extraction/BoatDetectionSummary.csv"]), "a") as BDSummary:
+                        BDSummaryWriter = csv.DictWriter(BDSummary, fieldnames=fieldnamesSummary, delimiter=',')
+
+                        #TODO: Adicionar funcionalidade de data para isto funcionar adequadamente
+                        if (previousFile[0:10] == currentFile[0:10]):
+                            currentIndexSpec = currentIndexSpec + 1
+                        else:
+                            currentIndexSpec = 0
+                        previousFile = currentFile
+                        
+                        BDSummaryWriter.writerow({'Index': currentBDSummary,
+                                                  'IndexSpec': currentIndexSpec,
+                                                  'Filename': currentFile, 
+                                                  'Date': (datetime.strptime(fileIdent, dateFormat24h)).strftime("%Y.%m.%d"),
+                                                  'NumPeaks': numPeaks,
+                                                  'Detection': detection,
+                                                  'Multiple': mSig})
+                    currentBDSummary = currentBDSummary + 1        
+
+                ## Save signature of the file (Full file signature)        
+                #sigFreq = []
+                #lowFreq = 0
+                #highFreq = 0
+                #distFreqs = 0
+                #numPeaks = 0
+                #detection = 0
+                #
+                #previous = 0
+                #for i in range(len(fileSig[:maxFreq])):    
+                #    if (fileSig[previous] != 0) & (fileSig[i]==0):
+                #        sigFreq.append(i)
+                #    previous = i
+                #
+                #if len(sigFreq) > 0:
+                #    lowFreq = sigFreq[0]
+                #    highFreq = sigFreq[len(sigFreq)-1]
+                #    distFreqs = highFreq - lowFreq
+                #    numPeaks = len(sigFreq)
+                #    if numPeaks > 0:
+                #        detection = 1
+                #
+                #writer.writerow({'Filename': currentFile, 
+                #                 'Minute': 100,
+                #                 'LowFreq': lowFreq, 
+                #                 'HighFreq': highFreq, 
+                #                 'DistFreqs': distFreqs, 
+                #                 'NumPeaks': numPeaks,
+                #                 'Detection': detection,
+                #                 'Multiple': mSig,
+                #                 'Cluster': 0})
+        
+            numCurrentFile = numCurrentFile + 1
+            if extractSpectrograms == False:
+                numCurrentSpectrogram = numCurrentSpectrogram + 1
+
+            timeFile1 = time.time()
+            sumTimeFiles += (timeFile1-timeFile)
+        except:
+            print("#####################################################")
+            print("#####################################################")
+            print("### Error on file: %s" % currentFile)
+            print("#####################################################")
+            print("#####################################################")
+            numCurrentFile = numCurrentFile + 1
+            if extractSpectrograms == False:
+                numCurrentSpectrogram = numCurrentSpectrogram + 1
+            # Append the faulty filename 
+            with open("/".join([currentPath, "Extraction/PROCESSING_ERROR_BoatDetection.log"]), "a") as myfile:
+                myfile.write("   %s\n" % currentFile)
+
+    ##############################################################################################################################
+    ### EXTRACT SPECTROGRAMS #####################################################################################################
+    ##############################################################################################################################    
+    # Append the boat extraction errors
+    with open("/".join([currentPath, "Extraction/PROCESSING_ERROR_BoatDetection.log"]), "a") as myfile:
+        myfile.write("\n")
+        myfile.write("### ERROR ON THE SPECTROGRAM GENERATION PROCESS ####\n")
+
+    if extractSpectrograms == True:
+        
+        #Load an audio file with separated samplerate, left and right channels        
+        for currentFile in currentFiles:
+            try:
+                timeSpec = time.time()
+                
+                if numCurrentSpectrogram <= len(currentFiles):
+                    #numCurrentSpectrogram = numCurrentSpectrogram + 1
+                    print("   Generating Spectrogram %s of %s (%s)" % (numCurrentSpectrogram+1, len(currentFiles), currentFile))
+                boatDetection = []
+                boatDetectionP = []        
+                
+                if currentFile[-4:] == 'flac':
+                    fileIdent = currentFile[:-5]
+                else:
+                    fileIdent = currentFile[:-4]
+                
+                frames, rate = sf.read("/".join([currentPath,currentFile]))
+            
+                # Pego um canal apenas
+                if (len(np.shape(frames)) == 1):
+                    selChannel = frames
+                else:
+                    if (audioChannel == 0):
+                        selChannel = frames[:,0]
+                    else:
+                        selChannel = frames[:,1]
+                
+                numMinutes = int(np.ceil((len(frames)/rate)/60))
+            
+                # Extract the spectrogram matrix (STFT)
+                #sampleWindows = len(selChannel)/rate
+                #specMatrix = np.zeros([rate/2, sampleWindows])
+                #for i in range(sampleWindows):
+                #    t1 = i*rate
+                #    t2 = (i+1)*rate
+                #    specMatrix[:,i] = calculate_spectrum(selChannel[t1:t2], rate)                            
+
+                if numMinutes == 1:
+                    specRate = 8192
+                    sampleWindows = len(selChannel)/(specRate)
+                    specMatrix = np.zeros([specRate/2, sampleWindows])
+                    for i in range(sampleWindows):
+                        t1 = i*specRate
+                        t2 = (i+1)*specRate
+                        specMatrix[:,i] = calculate_spectrum(selChannel[t1:t2], specRate)
+                else:
+                    # Extract the spectrogram matrix (STFT)
+                    specRate = rate
+                    sampleWindows = len(selChannel)/specRate
+                    specMatrix = np.zeros([specRate/2, sampleWindows])
+                    for i in range(sampleWindows):
+                        t1 = i*specRate
+                        t2 = (i+1)*specRate
+                        specMatrix[:,i] = calculate_spectrum(selChannel[t1:t2], specRate)
+
+                freqs1 = librosa.core.fft_frequencies(sr=rate, n_fft=(specRate)+1)
+                maxFreq1=0
+                while (freqs1[maxFreq1] < maximumFrequency):
+                    maxFreq1 += 1
+
+                # CREATE AN AUDIO SPECTROGRAM OF THE ENTIRE FILE
+                spec_width = 1200
+                spec_height = 600
+                speccmap = plt.cm.gray_r
+                specMatrixDB = librosa.amplitude_to_db(specMatrix[:maxFreq1,:], ref=1.0, top_db=topDB)
+                #specMatrixPWR = np.power(specMatrixDB, 2)
+                specMatrixDB1 = np.flipud(specMatrixDB)
+                #specMatrixDB1 = np.flipud(specMatrixPWR)             
+                norm = plt.Normalize(vmin=specMatrixDB1.min(), vmax=specMatrixDB1.max())    
+                #norm = plt.Normalize(vmin=normalizationMin, vmax=normalizationMax)
+                image = speccmap(norm(specMatrixDB1))        
+                #image = specMatrixDB1
+                newImage = scipy.misc.imresize(image, (spec_height, spec_width))
+                plt.imsave("%s/Extraction/BoatSpectrogram/%s.png" % (currentPath, fileIdent), newImage)
+
+                with open("%s/Extraction/BoatSpectrogram/%s.csv" % (currentPath, fileIdent), 'wb') as csvfile:
+                    fieldnames = ['sampleWindow', 'audioSeconds', 'maxFreq']
+                    writer = csv.DictWriter(csvfile, fieldnames=fieldnames, delimiter=',')            
+                    writer.writeheader()
+                    writer.writerow({'sampleWindow': 60,
+                                     'audioSeconds': numMinutes*60,
+                                     'maxFreq': freqs1[maxFreq1]})                  
+                
+                numCurrentSpectrogram = numCurrentSpectrogram + 1
+                
+                timeSpec1 = time.time()
+                sumTimeSpectrograms += (timeSpec1-timeSpec)
+                
+            except:
+                print("#####################################################")
+                print("#####################################################")
+                print("### Error on file: %s" % currentFile)
+                print("#####################################################")
+                print("#####################################################")
+                numCurrentSpectrogram = numCurrentSpectrogram + 1
+                # Append the faulty filename 
+                with open("/".join([currentPath, "Extraction/PROCESSING_ERROR_BoatDetection.log"]), "a") as myfile:
+                    myfile.write("   %s\n" % currentFile)
+
+    print("###############################################################")
+    print("### Process Completed #########################################")
+    print("###############################################################")
+    timeEnd = time.time()
+    timeToProcess = timeEnd-timeStart
+    meanTimeToProcess = sumTimeFiles/numFiles
+    meanTimeToProcessSpec = sumTimeSpectrograms/numFiles
+    print("Time to process %s files: %.2f seconds" % (numFiles, timeToProcess))
+    print("Mean time to process each file: %.2f seconds" % (meanTimeToProcess))
+    print("Mean time to generate each spectrogram: %.2f seconds" % (meanTimeToProcessSpec))
+    print(" ")
+
+@app.route("/start_extraction_boat", methods=['GET', 'POST'])
+def startExtractionBoat():    
+    global currentPath
+    global numCurrentFile
+    global numCurrentSpectrogram
+    global numFiles    
+    global extractSpectrograms24h
+    global numCurrentSpectrogram24h
+    
+    numCurrentFile = 0
+    numCurrentSpectrogram = 0
+    numCurrentSpectrogram24h = 0
+
+    extractBoatSignatures()
+    
+    if (extractSpectrograms24h):
+        extract24hSpectrogram()
+        
+    return jsonify({"status": "Extraction finished"})
+
+@app.route("/set_data_boat", methods=['GET', 'POST'])
+def setDataBoat():    
+    global SDThreshold
+    global maximumFrequency
+    global plotImages
+    global extractSpectrograms
+    global extractSpectrograms24h
+    global maximumFrequency24h
+    global sampleWindow24h
+    global audioChannel
+    global dateFormat24h
+
+    parameters = request.form.to_dict()
+
+    SDThreshold = float(parameters['threshold'])
+    maximumFrequency = int(parameters['maximumFrequency'])
+    plotImagesInt = 0 # = int(parameters['plotImages'])
+    extractSpectrogramsInt = int(parameters['extractSpectrograms'])
+    extractSpectrograms24hInt = int(parameters['extract24HSpectrograms'])
+    maximumFrequency24h = int(parameters['maximumFrequency24h'])
+    sampleWindow24h = int(parameters['timesample24h'])    
+    audioChannel = int(parameters['audiochannel'])
+    dateFormat24h = parameters['fileDateTimeMask']
+    
+    if plotImagesInt == 1:    
+        plotImages = True
+    else:
+        plotImages = False
+    
+    if extractSpectrogramsInt == 1:    
+        extractSpectrograms = True
+    else:
+        extractSpectrograms = False    
+
+    if extractSpectrograms24hInt == 1:    
+        extractSpectrograms24h = True
+    else:
+        extractSpectrograms24h = False   
+
+    return jsonify({"status": "Settings defined"})
+
+###########################################################################################################
+### Algoritmo de detecção por variação da amplitude e desvio padrão (Minuto)
+###########################################################################################################
+def extract24hSpectrogram():
+    global SDThreshold
+    global timeToProcess
+    global meanTimeToProcess
+    global meanTimeToProcessSpec
+    global plotImages
+    global extractSpectrograms
+    global timeSample
+    global dateFormat24h
+    global maximumFrequency24h
+    global sampleWindow24h
+    global audioChannel
+    
+    #TODO: Pegar estas variáveis do nome do arquivo
+    global year
+    global startDay
+    global endDay
+    global month
+
+    spec_width = 800
+    spec_height = 300   
+    sumTimeFiles = 0
+    sumTimeSpectrograms = 0
+    timeStart = time.time()
+    print("###############################################################")
+    print("### Process Started ###########################################")
+    print("###############################################################")
+
+    ###########################################################################################################
+    ### Variáveis de configuração 
+    ###########################################################################################################
+    # TODO: Passar por parâmetro essas variáveis    
+    topDB = 60
+    W = 13
+    H = 7
+    #audioChannel = 0
+    #spec_width = 1200
+    #spec_height = 600
+    #timeSample = 60 # Seconds
+    windowFFT = 2048*2
+
+    # TODO: Tentar extrair esas informacoes direto do nome dos arquivos... criar uma lista de datas a partir dos nomes.
+    #year = 2015
+    #startDay = 3
+    #endDay = 4
+    #month = 2
+
+    global currentPath
+    global numCurrentFile24h
+    global numCurrentSpectrogram24h
+    global numFiles24h
+    global numFilesSpec24h
+    global numCurrentFiles24h
+    global numCurrentFilesSpec24h
+    global maximumFrequency
+    global specMatrixDB
+    
+    #dateTimeFormat = "%Y.%m.%d_%H.%M.%S"
+    
+    ###########################################################################################################
+    ### Create the necessary directories
+    ###########################################################################################################
+    outputPath = "/".join([currentPath, "Extraction"])
+    if (os.path.isdir(outputPath) == False):
+        os.system("mkdir %s" % (outputPath))
+    
+    outputPath = "/".join([currentPath, "Extraction", "24hSpectrogram"])
+    if (os.path.isdir(outputPath) == False):
+        os.system("mkdir %s" % (outputPath))
+    
+    # Reset the extraction error report
+    with open("/".join([currentPath, "Extraction/PROCESSING_ERROR_24hSpectrogram.log"]), "w") as myfile:
+        myfile.write("####################################################\n")
+        myfile.write("### ERROR REPORT - Seecology                     ###\n")
+        myfile.write("####################################################\n")    
+    
+    ###########################################################################################################
+    ### List all the allowed files on the directory
+    ###########################################################################################################
+    wdir = os.listdir("%s" % (currentPath))
+    wdir.sort()
+    currentFiles = [arq for arq in wdir if (arq.lower().endswith(".wav") | 
+                                            arq.lower().endswith(".raw") | 
+                                            arq.lower().endswith(".flac"))]
+    currentFiles.sort()
+    
+    #Calcular o número de dias
+    #Get first and last dates
+    if currentFiles[0][-4:] == 'flac':
+        day1 = currentFiles[0][:-5]
+        day2 = currentFiles[len(currentFiles)-1][:-5]
+    else:
+        day1 = currentFiles[0][:-4]
+        day2 = currentFiles[len(currentFiles)-1][:-4]
+    
+    #dateFormat24h = "015089_%Y%m%d_%H%M%S"
+    dateTimeFormat = "%Y.%m.%d_%H.%M.%S"
+    
+    fromTime = "%s_00.00.00" % ((datetime.strptime(day1, dateFormat24h)).strftime("%Y.%m.%d"))
+    toTime =   "%s_23.59.59" % ((datetime.strptime(day2, dateFormat24h)).strftime("%Y.%m.%d"))
+    
+    fromTimeObj = datetime.strptime(fromTime, dateTimeFormat)
+    toTimeObj = datetime.strptime(toTime, dateTimeFormat)
+    delta = toTimeObj - fromTimeObj
+    numFiles24h = delta.days + 1
+    #print delta.days + 1
+
+    datelist = pd.date_range(fromTimeObj, toTimeObj).tolist()
+    
+    #Percorrer esse vetor
+    
+    #Montar o fromTimeObj e toTimeObj usando o dateFormat24h e o nome do arquivo
+        # FormatDate(ParseDate(nome do arquivo, dateFormat24h))
+    
+    
+    # Get the number of spectrograms to generate and the number of files needed
+    #numFiles24h = len(range(startDay,endDay+1))    
+    numFilesSpec24h = 0    
+    #for d in range(startDay,endDay+1):
+    for d in datelist:
+        #TODO: Tornar esta parte dinâmica, seguindo o padrão de data passado em dateTimeFormat
+        #day = "%d.%02d.%02d" % (year,month, d)
+        #fromTime = "%s_00.00.00" % day
+        #toTime =   "%s_23.59.59" % day
+        #fromTimeObj = datetime.strptime(fromTime, dateTimeFormat)
+        #toTimeObj = datetime.strptime(toTime, dateTimeFormat)
+        
+        for f in currentFiles:
+            if f[0] != ".": # Elimino arquivos ocultos gerados por alguns sistemas/softwares
+                if f[-4:] == 'flac':
+                    fileIdent = f[:-5]
+                else:
+                    fileIdent = f[:-4]
+                #if ((fromTimeObj <= datetime.strptime(fileIdent, dateFormat24h)) & (toTimeObj >= datetime.strptime(fileIdent, dateFormat24h)) ):
+                if (d.strftime("%Y.%m.%d") == (datetime.strptime(fileIdent, dateFormat24h)).strftime("%Y.%m.%d") ):
+                    numFilesSpec24h = numFilesSpec24h + 1    
+
+    ##############################################################################################################################
+    ### EXTRACT 24H SPECTROGRAM ##################################################################################################
+    ##############################################################################################################################    
+    # Append the spectrogram generation errors
+    with open("/".join([currentPath, "Extraction/PROCESSING_ERROR_24hSpectrogram.log"]), "a") as myfile:
+        myfile.write("\n")    
+        myfile.write("### ERROR ON THE 24H SPECTROGRAM GENERATION ################\n")
+
+    numCurrentFiles24h = 0
+    numCurrentFilesSpec24h = 0
+    #Percorro cada data do mês/ano selecionado        
+    timeTotalStart = time.time()
+    #for d in range(startDay,endDay+1):
+    
+    for d in datelist:        
+        print("### Day %s " % d.strftime("%Y.%m.%d"))
+        timeStart = time.time()        
+               
+        #TODO: Tornar esta parte dinâmica, seguindo o padrão de data passado em dateTimeFormat
+        #day = "%d.%02d.%02d" % (year,month, d)
+        #fromTime = "%s_00.00.00" % day
+        #toTime =   "%s_23.59.59" % day
+        #fromTimeObj = datetime.strptime(fromTime, dateTimeFormat)
+        #toTimeObj = datetime.strptime(toTime, dateTimeFormat)
+        
+        firstOk = False
+        firstFile = ""
+        lastFile = ""
+        
+        specMatrixMean = []    
+
+        for f in currentFiles:
+            try:
+                if f[0] != ".": # Elimino arquivos ocultos gerados por alguns sistemas/softwares
+                    if f[-4:] == 'flac':
+                        fileIdent = f[:-5]
+                    else:
+                        fileIdent = f[:-4]
+                    #if ((fromTimeObj <= datetime.strptime(fileIdent, dateFormat24h)) & (toTimeObj >= datetime.strptime(fileIdent, dateFormat24h)) ):
+                    if (d.strftime("%Y.%m.%d") == (datetime.strptime(fileIdent, dateFormat24h)).strftime("%Y.%m.%d") ):
+                        print("   Processing file %s of %s (%s)" % (numCurrentFilesSpec24h+1, numFilesSpec24h, f))            
+                
+                        # Save the first and last file names to extract date/time
+                        if firstOk == False:
+                            firstFile = fileIdent
+                            firstOk = True
+                        lastFile = fileIdent
+                        
+                        frames, rate = sf.read("/".join([currentPath,f]))
+                        
+                        if (len(np.shape(frames)) == 1):    #Test if audio is mono
+                            selChannel = frames                            
+                        else:
+                            if (audioChannel == 0):         #Select channel if stereo
+                                selChannel = frames[:,0]
+                            else:
+                                selChannel = frames[:,1]
+                                
+                        # Extract the spectrogram matrix (STFT)
+                        specRate = windowFFT
+                        sampleWindows = len(selChannel)/specRate
+                        specMatrix = np.zeros([specRate/2, sampleWindows])
+                        for i in range(sampleWindows):
+                            t1 = i*specRate
+                            t2 = (i+1)*specRate
+                            fft = np.fft.fft(selChannel[t1:t2], norm=None)    
+                            specMatrix[:,i] = abs(fft[:specRate/2])
+
+                        sampleWindowsOnFile = int(np.floor(len(frames)/rate)/(sampleWindow24h))
+                        samplesPerWindow = int(np.shape(specMatrix)[1]/sampleWindowsOnFile)
+
+                        for i in range(sampleWindowsOnFile):
+                            t1 = i*samplesPerWindow
+                            t2 = (i+1)*samplesPerWindow
+                            specMatrixMean.append(np.mean(specMatrix[:,t1:t2], axis=1))
+                                                
+                        numCurrentFilesSpec24h = numCurrentFilesSpec24h + 1
+            except:
+                print("#####################################################")
+                print("#####################################################")
+                print("### Error on file: %s" % f)
+                print("#####################################################")
+                print("#####################################################")
+                numCurrentFiles24h = numCurrentFiles24h + 1
+                with open("/".join([currentPath, "Extraction/PROCESSING_ERROR_24hSpectrogram.log"]), "a") as myfile:
+                    myfile.write("   %s\n" % f)
+
+        numCurrentFiles24h = numCurrentFiles24h + 1
+
+        freqs = librosa.core.fft_frequencies(sr=rate, n_fft=(specRate)+1)
+        if maximumFrequency24h != 0:            
+            maxFreq=1
+            while (freqs[maxFreq] < maximumFrequency24h):
+                maxFreq += 1
+        else: 
+            maxFreq = len(freqs)
+        maxFreq = maxFreq - 1
+        
+        # Convert the specMatrixMean tuple to an image matrix
+        print("Saving spectrogram")
+        #resImage = np.zeros(shape=(np.shape(specMatrixMean)[1], np.shape(specMatrixMean)[0]))
+        resImage = np.zeros(shape=(maxFreq, np.shape(specMatrixMean)[0]))
+        for i in range(np.shape(specMatrixMean)[0]):
+            resImage[0:maxFreq,i] = specMatrixMean[i][0:maxFreq]
+        
+        #Cores: Accent, gist_earth, gist_ncar (Perfeito), terrain (Ótimo), nipy_spectral, viridis    
+        #speccmap = plt.cm.terrain
+        #speccmap = plt.cm.gist_ncar
+        #speccmap = plt.cm.nipy_spectral
+        specMatrixDB = librosa.amplitude_to_db(resImage, ref=1.0, top_db=topDB)
+        specMatrixDB1 = np.flipud(specMatrixDB)
+        #specMatrixPWR = librosa.db_to_power(resImage, ref=1.0)
+        #specMatrixDB1 = np.flipud(specMatrixPWR)
+        #norm = plt.Normalize(vmin=normalizationMin, vmax=normalizationMax)
+        
+        #DB Mean of the file
+        specMatrixDBMean = np.mean(specMatrixDB, axis=0)
+        specMatrixDBMeanSmooth = smooth(specMatrixDBMean, window_len=128)
+        np.savetxt("%s/Extraction/24hSpectrogram/SpecPeriod_%s_DBMean.csv" % (currentPath, d.strftime("%Y.%m.%d")), specMatrixDBMeanSmooth)
+        
+        #image = speccmap(norm(specMatrixDB1))        
+        #image = speccmap(specMatrixDB1)
+        #image = norm(specMatrixDB1)
+        image = specMatrixDB1
+    
+        newImage = scipy.misc.imresize(image, (spec_height, spec_width))
+        plt.imsave("%s/Extraction/24hSpectrogram/SpecPeriod_%s.png" % (currentPath, d.strftime("%Y.%m.%d")), newImage)
+        
+        # Save file information for the visualization
+        print("Saving spectrogram info")
+        with open("%s/Extraction/24hSpectrogram/SpecPeriod_%s.csv" % (currentPath, d.strftime("%Y.%m.%d")), 'wb') as csvfile:
+            fieldnames = ['from', 'to', 'maxFreq']
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames, delimiter=',')            
+            writer.writeheader()
+    
+            auxFrom = datetime.strptime(firstFile, dateFormat24h)
+            auxTo   = datetime.strptime(lastFile, dateFormat24h)
+    
+            #TODO: Confirmar se a data final foi acrescida do tamanho do último arquivo e se não deu erro...
+            writer.writerow({'from': "{:%Y-%m-%d %H:%M:%S}".format(auxFrom),
+                             'to': "{:%Y-%m-%d %H:%M:%S}".format(auxTo + timedelta(seconds=int(len(frames)/rate))), 
+                             'maxFreq': np.ceil(freqs[maxFreq])})
+    
+        numCurrentSpectrogram24h = numCurrentSpectrogram24h + 1    
+        
+        timeEnd = time.time()
+        timeToProcess = timeEnd-timeStart
+        print("Time to process: %.2f seconds" % (timeToProcess))
+    
+    print("###############################################################")
+    print("### Process Completed #########################################")
+    print("###############################################################")
+    timeTotalEnd = time.time()
+    timeToProcess = timeTotalEnd-timeTotalStart
+    print("Time to process %s 24h spectrograms: %.2f seconds" % (numFiles24h, timeToProcess))
+    print(" ")
 
 ###########################################################################################################
 ### Calculate the spectrum of samples
@@ -1277,6 +2340,7 @@ def extractionProcess(jsonData, dbname):
         myfile.write("### ERROR ON THE SPECTROGRAM GENERATION PROCESS ####\n")
     
     if extractSpectrograms == True:
+        print("### EXTRACTING SPECTROGRAM ####")
         #Load an audio file with separated samplerate, left and right channels        
         for currentFile in audios:
             print("   PROCESSING: %s" % (currentFile))
@@ -1614,12 +2678,18 @@ def getProgress():
     global numCurrentFile
     global numCurrentSpectrogram
     global numFiles
-    
-    #print("PROGRESS: %s - %s" % (numCurrentFile, numCurrentSpectrogram))    
-        
+    global numFiles24h
+    global numFilesSpec24h
+    global numCurrentFiles24h
+    global numCurrentFilesSpec24h
+
     return jsonify({"numCurrentFile": numCurrentFile, 
                     "numCurrentSpectrogram": numCurrentSpectrogram, 
-                    "numFiles": numFiles})
+                    "numFiles": numFiles,
+                    "numFiles24h": numFiles24h,
+                    "numFilesSpec24h": numFilesSpec24h,
+                    "numCurrentFiles24h": numCurrentFiles24h,
+                    "numCurrentFilesSpec24h": numCurrentFilesSpec24h})
 
 @app.route('/addLabels', methods=['POST'])
 def addLabels():
@@ -1675,7 +2745,21 @@ def addLabels():
 
     return jsonify({"status": "Labels added"})
 
+@app.route('/removeLabels', methods=['POST'])
+def removeLabels():
+    global currentPath
+    
+    labelName = request.form.get('labelName')
 
+    df = pd.DataFrame()
+    df = pd.read_csv("%s/Extraction/features_labels.csv" % (currentPath))
+    
+    if labelName in df.columns:
+        df.drop(labelName, axis=1, inplace=True)
+    
+    df.to_csv("%s/Extraction/features_labels.csv" % (currentPath), sep=",", index=None)
+
+    return jsonify({"status": "Labels removed"})
 
 #@app.route("/set_data", methods=['GET', 'POST'])
 #def setData():    
@@ -1721,7 +2805,9 @@ if __name__ == "__main__":
     log.disabled = True
     app.logger.disabled = True    
     
-    app.run(port=serverport, debug=True, use_reloader=True)
+    app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
+
+    app.run(port=serverport, debug=True, use_reloader=False)
     
     
 # Para matar um servidor que ficou ativo:        
