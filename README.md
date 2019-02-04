@@ -2,7 +2,7 @@
 
 ## A visualization framework for acoustic ecology applications
 
-Author: Clausius Duque Reis - UFV-CRP/ICMC-USP (clausiusreis@gmail.com).
+Author: Clausius Duque Reis - UFV-CRP / ICMC-USP (clausiusreis@gmail.com).
 
 Advisor: Maria Cristina Ferreira de Oliveira - ICMC-USP.
 
