@@ -1,0 +1,1135 @@
+
+<!-- MAIN SCREEN -->
+
+<html>
+    <head>
+        <meta charset='utf-8'>
+        <link rel="shortcut icon" href="static/favicon.ico">
+        <link rel="stylesheet" type="text/css" href="static/css/stylePage.css">
+        <link rel="stylesheet" type="text/css" href="static/css/stylesMenus.css">
+        <link rel="stylesheet" type="text/css" href="static/css/popup.css">
+        <link rel="stylesheet" type="text/css" href="static/css/sliderStyle.css">
+        <link rel="stylesheet" type="text/css" href="static/css/ConcentricRadviz.css">        
+        <link rel="stylesheet" type="text/css" href="static/libs/jquery-ui/jquery-ui.css">
+
+        <script src="static/libs/jquery.js" type="text/javascript"></script>
+        <script src="static/libs/jquery-ui/jquery-ui.js" type="text/javascript"></script>
+
+		<script src="static/pageFunctions.js" type="text/javascript"></script>
+		<script src="static/visComponents/LineChart/linechart.js"></script>
+		<script src="static/visComponents/LineChart/linechart1.js"></script>
+		<!-- <script src="static/visComponents/Histogram/histogramV4.js"></script> -->
+		<script src="static/visComponents/Brushing/Brushing.js"></script>
+		<script src="static/libs/wavesurfer/wavesurfer205.js"></script>
+		<script src="static/visComponents/LabelMaker/LabelMaker.js"></script>
+         <script src="static/visComponents/LabelMaker/LabelMaker1.js"></script>
+         <script src="static/libs/d3-lasso.min.js"></script>
+         <script src="static/visComponents/radviz/ConcentricRadviz2.js"></script>
+        
+
+
+		<style>
+			body{
+				font-family: "Trebuchet MS", sans-serif;
+				margin: 8px;
+			}
+			.demoHeaders {
+				margin-top: 2em;
+			}
+			#dialog-link {
+				padding: .4em 1em .4em 20px;
+				text-decoration: none;
+				position: relative;
+			}
+			#dialog-link span.ui-icon {
+				margin: 0 5px 0 0;
+				position: absolute;
+				left: .2em;
+				top: 50%;
+				margin-top: -8px;
+			}
+			#icons {
+				margin: 0;
+				padding: 0;
+			}
+			#icons li {
+				margin: 2px;
+				position: relative;
+				padding: 4px 0;
+				cursor: pointer;
+				float: left;
+				list-style: none;
+			}
+			#icons span.ui-icon {
+				float: left;
+				margin: 0 4px;
+			}
+			.fakewindowcontain .ui-widget-overlay {
+				position: absolute;
+			}
+			select {
+				width: 200px;
+			}
+
+	#featureslistRadviz {
+		border: 1px solid #eee;
+		width: 272px;
+		min-height: 20px;
+		list-style-type: none;
+		margin: 0;
+		padding: 5px 0 0 0;
+		float: left;
+		margin-right: 10px;
+	}
+	
+	#layer1, #layer2, #layer3, #layer4, #layer5 {
+		border: 1px solid #eee;
+		width: 272px;
+		min-height: 20px;
+		list-style-type: none;
+		margin: 0;
+		padding: 5px 0 0 0;
+		margin-right: 0px;
+		margin-left: 0px;
+	}
+	
+	#featureslistRadviz li, #layer1 li, #layer2 li, #layer3 li, #layer4 li, #layer5 li {
+		margin: 0 5px 5px 5px;
+		padding: 5px;
+		font-size: 1.2em;
+		width: 250px;
+	}
+		
+	.DivWithScroll{
+	    overflow:scroll;
+	    overflow-x:hidden;
+	}
+	
+    .lasso path {
+        stroke: rgb(80,80,80);
+        stroke-width:1.5px;
+    }
+
+    .lasso .drawn {
+        fill-opacity:.05 ;
+    }
+
+    .lasso .loop_close {
+        fill:none;
+        stroke-dasharray: 4,4;
+    }
+
+    .lasso .origin {
+        fill:#3399FF;
+        fill-opacity:.5;
+    }
+        
+	#DivB{
+	    position:relative;
+/* 	    border: 1px solid blue; */
+	    width:600px;
+	    height: 100%;
+/* 	    background-color: blue; */
+	    float: left;
+	}
+	#DivA{
+	    position: relative;	    
+/* 	    border: 1px solid red; */
+	    width: 600px;
+	    height: 100%;
+	    left:0px;
+/* 	    background-color: red; */
+	    float: left;
+	}
+	
+	.group:before,
+	.group:after {
+	    content: "";
+	    display: table;
+	} 
+	.group:after {
+	    clear: both;
+	}
+	.group {
+	     zoom: 1; /* For IE 6/7 (trigger hasLayout) */
+	}
+
+/* GridTable */
+table.gridtable {
+	font-family: verdana,arial,sans-serif;
+	font-size:11px;
+	color:#333333;
+	border-width: 1px;
+	border-color: #666666;
+	border-collapse: collapse;
+}
+table.gridtable th {
+	border-width: 1px;
+	padding: 8px;
+	border-style: solid;
+	border-color: #666666;
+	background-color: #dedede;
+}
+table.gridtable td {
+	border-width: 1px;
+	padding: 8px;
+	height: 2px;
+	border-style: solid;
+	border-color: #666666;
+	background-color: #ffffff;
+}
+
+/* Tooltip */
+div.tooltip {	
+	position: absolute;			
+	text-align: center;			
+	width: 60px;					
+	height: 28px;					
+	padding: 2px;				
+	font: 12px sans-serif;		
+	background: lightgray;	
+	border: 4px;		
+	border-radius: 4px;			
+	pointer-events: none;			
+}
+
+/* Loading gif */
+#loading {
+   width: 100%;
+   height: 100%;
+   top: 0;
+   left: 0;
+   position: fixed;
+   display: block;
+   opacity: 0.7;
+   background-color: #fff;
+   z-index: 99;
+   text-align: center;
+}
+
+#loading-image {
+  position: absolute;
+  -webkit-transform: translate(-50%,-50%);
+  transform: translate(-50%,-50%);
+  top: 50%;
+  left: 50%;
+  z-index: 100;
+}
+		</style>
+
+        <script src="static/libs/d3.v4.js" type="text/javascript"></script>
+        
+        <title>Seecology - Data Visualization Framework for Soundscape Ecology Applications</title>
+    </head>
+
+    <body>
+        <div id="loading">
+            <img id="loading-image" src="static/images/loading.gif" alt="Loading..." />
+        </div>
+    
+        <!-- ########################################################################################################################## -->
+        <!-- ### MENU BEGIN ########################################################################################################### -->
+        <!-- ########################################################################################################################## -->
+        
+        <div id='cssmenu'>
+            <ul>
+                <li><a href='/'><span>HOME</span></a></li>
+                
+                <!--
+                <li><a href='#'><span>Results</span></a>
+                	<ul>
+                		<li><a href='../scripts/indexFET1.php'><span>Feature Extraction Tool</span></a></li>                		
+                		<li><a href='../scripts/indexFSDC.php'><span>Feature Selection by Distance/Correlation</span></a></li>                		
+                	</ul>
+                </li>
+                -->
+
+                <li><a href='#'><span>Contact</span></a>
+                    <ul>
+                        <li><a href='mailto:clausiusreis@gmail.com?Subject=Seecology_Framework'><span>Clausius Duque G. Reis (Author)</span></a></li>	              
+                        <li><a href='mailto:cristina@icmc.usp.br?Subject=Seecology_Framework'><span>Maria Cristina F. de Oliveira (Advisor)</span></a></li>
+                    </ul>
+                </li>
+
+                <li><a href=''><span id="dirtxt"></span></a></li>
+            </ul>
+        </div>
+        
+
+        <!-- ########################################################################################################################## -->
+        <!-- ### MENU END ############################################################################################################# -->
+        <!-- ########################################################################################################################## -->        
+
+<!-- ########################################################################################################################## -->
+<!-- ### MODAL WINDOW BEGIN ################################################################################################### -->
+<!-- ########################################################################################################################## -->
+<div id="light" class="white_content" style="height:700px; top:50px;">				
+	<div id="spec1" style='display: inline;'>	                    				
+		<div style='border: 1px solid gray;'>
+			<table width="100%">
+				<tr>
+					<td width="45px">&nbsp;</td>									
+					<td>
+						<button id="rwd-btn" class="btn btn-secondary" onclick="wavesurfer.seekTo(0)">Rewind</button>
+						<button id="play-btn" class="btn btn-success" onclick="wavesurfer.playPause()">Play/Pause</button>
+						&nbsp;&nbsp;&nbsp;
+						<b>Feature on Line Chart:</b>
+						<select id="featuresPlayer1" name="featuresPlayer1" onchange="updatePlayer(currentFile, currentSample, $('#featuresPlayer1').val(), 1);"></select>
+					</td>
+					<td align="right">
+						<a href="javascript:void(0)" onclick="document.getElementById('light').style.display='none';document.getElementById('fade').style.display='none'"> 
+							<img src="static/images/close.png">
+						</a>
+
+					</td>
+				</tr>
+			</table>
+			
+			<div id="waveform" style="width: 800px; margin-left: 50px; margin-top: 2px;"></div>
+        	<!-- Load the audio after the components are set (waveform) -->
+			<script>
+				var wavesurfer = 
+					WaveSurfer.create({
+			    		audioRate: $("#audioRate").value,
+						container: '#waveform',
+						waveColor: 'black',
+						progressColor: 'red',
+						barWidth: 3,
+						//barHeight:5,
+						normalize: true,
+						splitChannels: false,
+						height: 60,
+						cursorColor: 'black',
+						cursorWidth: 2
+					});							
+			</script>
+
+			<div id="labelmaker"></div>
+			<div id="linechart1"></div>
+		</div>
+	</div>    
+</div>
+<div id="fade" class="black_overlay"></div>
+<script>
+LabelMaker()
+    .$el(d3.select("#labelmaker"))
+    .minFreq(0)
+    .maxFreq(22050)
+    .sampleWindow(1)
+    .audioSeconds(60)        
+    .specImg("static/images/emptySpec.png")
+    .currentSample(-10)
+    .render();
+
+var line1 = linechart1()
+    .$el(d3.select("#linechart1"))
+    .width(800)
+    .height(100)
+    .color("red")
+    .transitionTime(300)
+    .render();
+
+wavesurfer.load('static/images/emptySpec.mp3');
+</script>
+<!-- ########################################################################################################################## -->
+<!-- ### MODAL WINDOW END ##################################################################################################### -->
+<!-- ########################################################################################################################## -->
+
+
+
+<!-- ########################################################################################################################## -->
+<!-- ### PAGE CONTENT START ################################################################################################### -->
+<!-- ########################################################################################################################## -->
+<div id="csscontent">
+
+    <div id="title" class="roundDiv" align="center">
+
+    <div id="divLeft" style="float:left;">
+        <div id="tabs" style="display:table; width:610px;">
+			<ul>
+				<li><a href="#tabs-1">Available Features</a></li>
+				<li><a href="#tabs-2">Samples Selection</a></li>
+				<li><a href="#tabs-3">Labels and Filters</a></li>
+			</ul>
+			<div id="tabs-1">
+                  <!--
+				<div id="histogram" style="background-color: white; margin: -5px -10px 5px -10px; height: 100px; border: 1px solid gray;">
+					<div align='left'><b>&nbsp;&nbsp;&nbsp;<font color='black'>Feature</font> Values Distribution</b></div>
+				</div>
+                  -->
+				
+				<table style="margin: -5px -15px 0px -15px; width: 460px;"> 
+					<tr>
+						<td align="left"><b>&nbsp;Features List</b></td>
+						<td align="left"><b>Layers</b></td>
+					</tr>
+				</table>			
+	
+				<div style="margin: 0px -15px 0px -10px; width: 100%; height: 100%;">				
+					<div id="flist1" class="DivWithScroll" style="width: 290px; height: 100%; float: left;">
+						<ul id="featureslistRadviz" class="connectedSortable" style="background-color: rgb(220,220,220);"></ul>
+					</div>
+
+					<div id="flist2" class="DivWithScroll" style="position: absolute; width:290px; height: 83%; margin-left: 295px;">
+						<table>
+							<tr>
+								<td>
+									<ul id="layer1" class="connectedSortable" style="background-color: rgb(153,0,0);"></ul>
+									<br>
+									
+									<ul id="layer2" class="connectedSortable" style="background-color: rgb(3,78,123);"></ul>
+									<br>
+									
+									<ul id="layer3" class="connectedSortable" style="background-color: rgb(0,90,50);"></ul>
+									<br>
+									
+									<ul id="layer4" class="connectedSortable" style="background-color: rgb(215,48,31);"></ul>
+									<br>
+									
+									<ul id="layer5" class="connectedSortable" style="background-color: rgb(5,112,176);"></ul>
+									<br>
+								</td>
+							</tr>
+						</table>
+					</div>
+				</div>
+				
+								
+			</div>
+			<div id="tabs-2">
+				<div id="spec1" style='display: inline;'>	                    				
+					<div style='border: 1px solid gray;'>
+						<table>
+							<tr>
+								<td width="45px">&nbsp;</td>									
+								<td>
+									<button id="rwd-btn" class="btn btn-secondary" onclick="wavesurfer1.seekTo(0)">Rewind</button>
+									<button id="play-btn" class="btn btn-success" onclick="wavesurfer1.playPause()">Play/Pause</button>
+									&nbsp;&nbsp;&nbsp;
+									<b>Feature on Line Chart:</b>
+									<select id="featuresPlayer" onchange="updateLineChart1(currentFile, $('#featuresPlayer').val());"></select>
+								</td>
+							</tr>
+						</table>
+						
+						
+						<div id="waveform1" style="width: 450px; margin-left: 0px; margin-top: 2px;"></div>
+		            	<!-- Load the audio after the components are set (waveform) -->
+						<script>
+							var wavesurfer1 = 
+								WaveSurfer.create({
+						    		//audioRate: $("#audioRate").value,
+									container: '#waveform1',
+									waveColor: 'black',
+									progressColor: 'red',
+									barWidth: 3,
+									//barHeight:5,
+									normalize: true,
+									splitChannels: false,
+									height: 60,
+									cursorColor: 'black',
+									cursorWidth: 2
+								});							
+						</script>
+                        
+						<div id="labelmaker1"></div>
+						<div id="linechart2" style="margin-left: -40px;"></div>
+					</div>
+				</div>
+            			
+				<br>
+				<div id="selection" class="DivWithScroll" style="height: 250px;"></div>
+                  <div id="addLabel" style="height: 100%;">                      
+                      <form name="labelForm" id="labelForm">
+                          <input type="hidden" id="labelName" name="labelName">
+                          <input type="hidden" id="labelList" name="labelList">
+                          <b><font size="4">ADD NEW LABEL (Without spaces):&nbsp;</font></b><input type="text" id="labelName1" name="labelName1">
+                          <input name="submit" id="submit" type="submit" value="Add label">
+                      </form>
+                  </div>
+
+			</div>
+			<div id="tabs-3">
+                 <div id="labels" name="labels" class="DivWithScroll" style="height: 250px;"></div>
+			</div>			
+		</div>          
+    </div>
+    
+    <div id="divRight" style="float:left;">
+        <div id="radviz" style="position: absolute; top: 0px; width: 685px; height: 100%; float: right; background-color: none;"></div>
+    </div>
+    
+    </div>
+
+</div>
+<!-- ########################################################################################################################## -->
+<!-- ### PAGE CONTENT END ##################################################################################################### -->
+<!-- ########################################################################################################################## -->
+
+
+
+<script>
+//##########################################################################################################
+//### Page Functions #######################################################################################
+//##########################################################################################################
+var colorLabels = ["#8c8c8c", "#3366cc", "#dc3912", "#ff9900", "#109618", "#990099", 
+                   "#0099c6", "#dd4477", "#66aa00", "#b82e2e", "#316395","#994499", 
+                   "#22aa99", "#aaaa11", "#6633cc", "#e67300", "#8b0707", "#651067", 
+                   "#329262", "#5574a6", "#3b3eac"];
+//var colorLabels = ['#adadad','#ea0909','#008411','#0225d3','#3d54c6','#fc8302',
+//                   '#70ff00','#016368','#fff200','#7a7400','#5b0077'];
+
+var newWidth = $("#csscontent").width();
+var newHeight = $("#csscontent").height();
+
+$("#chartlist").height(newHeight-183);
+$("#featureslistRadviz").height(newHeight-80);
+$("#labels").height(newHeight-80);
+
+var currentPath = "";
+var currentFeature = "";
+var currentFile = "";
+var currentDate = "";
+var currentSample = "";
+var currentLabels = [];
+
+if ("{{currentPath}}" != ""){
+    document.getElementById("dirtxt").innerHTML = 
+        "<font color='yellow'>Current path:&nbsp;</font><font color='lightgreen'>{{currentPath}}</font>";
+    currentPath = "{{currentPath}}";
+};
+
+function SelectElement(id, valueToSelect)
+{    
+    var element = document.getElementById(id);
+    element.value = valueToSelect;
+}
+
+function addFeatures(headerNames) {
+    	for (var n=4; n<headerNames.length; n++) {
+        var text = headerNames[n];
+		
+        //var $option = $("<option>").val(text).text(text);
+        //$("#featuresPlayer").append($option);
+
+        var $option1 = $("<option>").val(text).text(text);
+        $("#featureslistRadviz").append($option1);
+	}
+
+	currentFeature = headerNames[4];	
+}
+
+var firstItem = "";
+var firstLoad = true;
+var previousDay = "";
+function updateFeaturesNames(){
+	d3.csv('http://localhost:{{port}}/Extraction/features_group.csv', function(error, data){		
+		if (firstLoad == true) {
+			var headerNames = d3.keys(data[0]);		
+			addFeatures(headerNames);
+
+			//Add the days
+			firstItem = "";
+	    	data.forEach(function(d){
+	    		if (previousDay != d.Date){
+	    			var $option = $("<option>").val(d.Date).text(d.Date);
+	    			$("#daylist").append($option);    		    
+	    		}
+	    		previousDay = d.Date;
+	    		if (firstItem == ""){
+	    			firstItem = d.Date;
+	    		}
+	    	});
+	    	    	
+	    	firstLoad = false;			
+		}
+	});
+}
+
+var updatePlayer = function (currentFile, currentSample, currentFeature, origin) {
+
+    SelectElement("featuresPlayer1", currentFeature);
+
+	console.log("Current", currentSample, currentFile, currentFeature, origin);
+	
+   //var csvFile1 = "http://localhost:{{port}}/Extraction/features_group.csv";
+   var csvFile1 = "http://localhost:{{port}}/Extraction/AudioFeatures/"+currentFile+".nor";
+   var csvFile2 = "http://localhost:{{port}}/Extraction/AudioMP3/"+currentFile+"_info.csv";    
+
+	if (origin == 0) {
+    	d3.csv(csvFile2, function (error, infoData) {
+    		LabelMaker()
+                .$el(d3.select("#labelmaker"))
+                .minFreq(0)
+                .maxFreq(infoData[0]['maxFreq'])
+                .sampleWindow(infoData[0]['sampleWindow'])
+                .audioSeconds(infoData[0]['audioSeconds'])
+    	        .currentSample(currentSample/infoData[0]['sampleWindow'])
+                .specImg('http://localhost:{{port}}/Extraction/AudioSpectrogram/'+currentFile+'.png')
+                .render();
+        });
+    	
+    	wavesurfer.load("http://localhost:{{port}}/Extraction/AudioMP3/"+currentFile+".mp3");		
+	}
+	
+	//updateLineChart(currentFile, $('#featuresPlayer').val());
+	currentFeature1 = currentFeature;
+	if (currentFile != "") {
+	   //var csvFile1 = "http://localhost:{{port}}/Extraction/features_group.csv";
+
+		d3.csv(csvFile1, function (error, data) {
+	    	singleData = [];
+	    	singleDataMean = [];
+	    	data.forEach(function (dd, i) {
+	    		if (dd['FileName'] == currentFile) {
+	    			singleData.push({x:+dd['SecondsFromStart'], y:+dd[currentFeature1]});
+	    		}
+	    		singleDataMean.push({x:+dd['SecondsFromStart'], y:+dd[currentFeature1]});
+	        });
+	    	
+	    	singleData.push({x:0, y:0});
+	    	singleData[singleData.length-1].x = singleData[singleData.length-2].x+singleData[1].x;;
+	    	singleData[singleData.length-1].y = singleData[singleData.length-2].y;
+	    	
+	    	meanValue = d3.mean(singleDataMean, function(d) { return +d.y });
+ 	    	line1.mean(meanValue).data(singleData).render();
+	    });
+	};
+};
+
+//##############################################################################################################
+//###   PLAYER   ###############################################################################################
+//##############################################################################################################    
+//Ao trocar o Feature, File ou Color scheme, chamo esta função
+var currentFeature = $("featuresPlayer").val();
+var updatePlayer1 = function (currentFile, currentSample) {
+
+	//$( "#tabs" ).tabs({ active: 3 });
+	
+    //var csvFile1 = "http://localhost:{{port}}/Extraction/features_group.csv";
+    var csvFile2 = "http://localhost:{{port}}/Extraction/AudioMP3/"+currentFile+"_info.csv";    
+    var mp3File = "http://localhost:{{port}}/Extraction/AudioMP3/"+currentFile+".mp3";    
+    
+    //if (fileExists(mp3File)){      
+    	d3.csv(csvFile2, function (error, infoData) {
+    		LabelMaker1()
+                .$el(d3.select("#labelmaker1"))
+                .minFreq(0)
+                .maxFreq(infoData[0]['maxFreq'])
+                .sampleWindow(infoData[0]['sampleWindow'])
+                .audioSeconds(infoData[0]['audioSeconds'])
+    	        .currentSample(currentSample/infoData[0]['sampleWindow'])
+                .specImg('http://localhost:{{port}}/Extraction/AudioSpectrogram/'+currentFile+'.png')
+                .render();
+        });
+            
+        console.log(currentFile);
+        wavesurfer1.load(mp3File);
+    //}	
+    
+    updateLineChart1(currentFile, $('#featuresPlayer').val());
+};
+
+var updateLineChart1 = function (currentFile, currentFeature) {
+	
+   var csvFile1 = "http://localhost:{{port}}/Extraction/AudioFeatures/"+currentFile+".nor";
+   //var csvFile1 = "http://localhost:{{port}}/Extraction/features_group.csv";
+
+	if (currentFile != "") {
+
+		d3.csv(csvFile1, function (error, data) {
+	    	singleData = [];
+	    	singleDataMean = [];
+	    	data.forEach(function (dd, i) {
+	    		if (dd['FileName'] == currentFile) {
+	    			singleData.push({x:+dd['SecondsFromStart'], y:+dd[currentFeature]});
+	    		}
+	    		singleDataMean.push({x:+dd['SecondsFromStart'], y:+dd[currentFeature]});
+	        });
+	    	
+	    	singleData.push({x:0, y:0});
+	    	singleData[singleData.length-1].x = singleData[singleData.length-2].x+singleData[1].x;;
+	    	singleData[singleData.length-1].y = singleData[singleData.length-2].y;
+
+	    	meanValue = d3.mean(singleDataMean, function(d) { return +d.y });
+	        line2.mean(meanValue).data(singleData).render();
+	    });
+	};
+      
+};
+
+var layers = [];
+
+$( function() {
+	 function sortByValue() {
+	    var sortableList = $('#featureslistRadviz');
+	    var listitems = $('li', sortableList);
+	
+	    listitems.sort(function (a, b) {
+	        return ($(a).val() > $(b).val())  ? 1 : -1;
+	    });
+	    sortableList.append(listitems);
+	
+	}
+	 
+	function sortByText() {
+	    var sortableList = $('#featureslistRadviz');
+	    var listitems = $('li', sortableList);
+
+	    listitems.sort(function (a, b) {
+	        return ($(a).text().toUpperCase() > $(b).text().toUpperCase())  ? 1 : -1;
+	    });
+	    sortableList.append(listitems);
+	}
+
+   $( "#featureslistRadviz, #layer1, #layer2, #layer3, #layer4, #layer5" ).sortable({
+     connectWith: ".connectedSortable"
+   }).disableSelection();
+   
+   var status = true; 
+   $( "#featureslistRadviz, #layer1, #layer2, #layer3, #layer4, #layer5" ).sortable({
+       update: function(event, ui) {
+       	if (status == true){
+       		//console.log("From: "+this.id);
+       		status = false;
+       	} else {
+      		//console.log("To: "+this.id);
+       		status = true;
+       		
+       		sortByValue();
+       		        		
+       		layers = [];
+       		layersName = ["layer1", "layer2", "layer3", "layer4", "layer5"];        		
+       		for (var j = 0; j < layersName.length; ++j) {
+       			var ul = document.getElementById(layersName[j]);
+                   	var items = ul.getElementsByTagName("li");
+					//var aux = [];
+					var itemID = 0;
+					if (items.length > 1) {
+	                   	for (var i = 0; i < items.length; ++i) {
+	                       //aux.push(items[i].innerText);                       
+	                       layers.push({"value":itemID++, "name":items[i].innerText, "layer":j});                       
+	                   	}
+					}
+       		}
+            updateRadviz(layers, currentLabels);
+       	}
+       }
+   });
+
+ } );
+
+function buildTable(data) {
+	var table = document.createElement("table");
+	table.className="gridtable";
+	table.width = "100%";
+	var thead = document.createElement("thead");
+	var tbody = document.createElement("tbody");
+	var headRow = document.createElement("tr");
+	["Filename","Sample", "Open player", "Use"].forEach(function(el) {
+		  var th=document.createElement("th");
+		  th.appendChild(document.createTextNode(el));
+		  headRow.appendChild(th);
+	});
+	thead.appendChild(headRow);
+	table.appendChild(thead); 
+	data.forEach(function(el) {
+		var tr = document.createElement("tr");
+						
+		for (var o in el) {  
+			var td = document.createElement("td");
+			td.align = "center";
+			
+			td.appendChild(document.createTextNode(el[o]))
+			tr.appendChild(td);
+	  	}
+		var td = document.createElement("td");
+		td.align = "center";
+		
+		//Button View
+		var button = document.createElement('button');
+		button.innerHTML = 'Small';
+		button.onclick = function(){
+			currentFile = el.FileName;
+			updatePlayer1(el.FileName, el.SecondsFromStart);
+			return false;
+		};
+		td.appendChild(button);
+		tr.appendChild(td);
+
+         //Button View
+		var button = document.createElement('button');
+		button.innerHTML = 'Big';
+		button.onclick = function(){
+            currentFile = el.FileName;
+            updatePlayer(el.FileName, el.SecondsFromStart, $("#featuresPlayer").val(), 0);
+            document.getElementById('light').style.display='block';
+            document.getElementById('fade').style.display='block';
+
+            //console.log("Abrir: "+el.FileName+"|"+el.SecondsFromStart);
+            return false;
+		};
+		td.appendChild(button);
+		tr.appendChild(td);
+		
+		var td = document.createElement("td");		
+		td.align = "center";
+		
+		//Checkbox
+		var checkbox = document.createElement('input');
+		checkbox.type = "checkbox";
+
+		//checkbox.name = "cb_"+el.FileName+"|"+el.SecondsFromStart;		
+		//checkbox.id = "cb_"+el.FileName+"|"+el.SecondsFromStart;
+         checkbox.name = "cb_labels";		
+		checkbox.id = "cb_labels";
+
+         //checkbox.value = 1;
+         checkbox.value = el.FileName+"|"+el.SecondsFromStart;
+
+		checkbox.checked = true;
+		td.appendChild(checkbox);
+		
+		tr.appendChild(td);
+		tbody.appendChild(tr);  
+	});
+	table.appendChild(tbody);             
+	return table;
+}
+
+function updateGrid(selection){
+	
+	d3.csv('http://localhost:{{port}}/Extraction/features_group.csv', function(error, data){
+			
+		data1 = [];
+		data.forEach(function(d, i) {
+			selection.forEach(function(dd,ii){				
+				aux = dd.split(":");
+				if ((d.FileName == aux[0]) && (d.SecondsFromStart == aux[1])){
+					data1.push({'FileName':d.FileName, 'SecondsFromStart':d.SecondsFromStart})
+				}
+			});
+		});
+		
+		document.getElementById("selection").innerHTML = "";
+		document.getElementById("selection").appendChild(buildTable(data1));
+	});	
+}
+
+/*
+function updateHistogram(feature){
+	
+	d3.csv('http://localhost:{{port}}/Extraction/features_group.csv', function(error, data){
+
+		actualFeature = feature;
+				
+	    histData = new Array(data.length);
+	    for (i = 0; i < data.length; i++) {
+	    	histData[i] = data[i][actualFeature];
+	    };
+	    
+	    $elhist = d3.select("#histogram");// $("#histogram");
+	    $elhist.empty();
+	    $elhist.html("<div align='left'><b>&nbsp;&nbsp;&nbsp;<font color='black'>"+actualFeature+"</font> Values Distribution</b></div>");	    
+	    var hist1 = histogram()
+        	    	.$el($elhist)
+        	    	.data(histData)
+        	    	.width(540)
+        	    	.height(55)
+        	    	.bins(20)
+        	    	.minColor("black")
+        	    	.maxColor("blue")
+        	    	.render();
+	});
+}
+*/
+
+function addFeatures(headerNames) {
+	for (var n=4; n<headerNames.length; n++) {
+        var text = headerNames[n];//$("input[name='add1']").val();
+        //var $li = $("<li onmouseover='updateHistogram(this.innerHTML);' class='ui-state-default'/>").val(n-3).text(text);
+        var $li = $("<li class='ui-state-default'/>").val(n-3).text(text);
+        $("#featureslistRadviz").append($li);
+        $("#featureslistRadviz").sortable('refresh');
+		
+        var $option = $("<option>").val(text).text(text);
+        $("#featuresPlayer").append($option);
+
+        var $option = $("<option>").val(text).text(text);
+        $("#featuresPlayer1").append($option);
+	}
+}
+
+var firstLoad = true;
+function updateRadviz(layers, labels=[]){
+	
+    currentLabels = labels;
+    
+    //d3.csv('http://localhost:{{port}}/Extraction/features_labels.csv', function(error, data){
+        	d3.csv('http://localhost:{{port}}/Extraction/features_group.csv', function(error, data){
+        		document.getElementById("radviz").innerHTML = "";
+        		
+        		if (firstLoad == true) {
+        			var headerNames = d3.keys(data[0]);		
+        			addFeatures(headerNames);
+        			firstLoad = false;
+        		}
+        		
+        		if (layers.length > 2) {
+        			var radviz1 = ConcentricRadviz({
+                    container   : 'radviz',
+                    layers		: layers,
+                    data		: data,
+                    serverPath: 'http://localhost:{{port}}',
+                    labels: labels,
+                    samplesOpacity: 0.7
+        			}).render();
+        		}
+        	});
+    //});
+}
+
+updateRadviz(layers);
+
+var data = [];
+//Cria os labels que estão selecionados no checkbox "cb_labels"
+$("#labelForm").on('submit', function (e) {
+    e.preventDefault();
+
+    $("#labelName").val($("#labelName1").val().replace(/\s/g, ''));
+    $("#labelName1").val($("#labelName").val());
+    var labelName = $("#labelName").val();    
+    var selected = [];
+    $('div#selection input[type=checkbox]').each(function() {
+       if ($(this).is(":checked")) {
+           selected.push($(this).attr('value'));
+       }
+    });
+    
+    //console.log("labelName",labelName);
+    //console.log("labelList",selected.join(";"));
+    
+    $("#labelName").val(labelName);
+    $("#labelList").val(selected.join(";")); 
+
+    $('#loading').show();
+    
+    $.ajax({
+        type: "POST",
+        url: "/addLabels",
+        dataType: "json",
+        data: $("#labelForm").serialize(),
+        success: function(result) {
+            //alert(result['status']);
+            //console.log(result['status']);
+            //console.log("Criar a função loadLabels() e chamar no início da página e aqui.");
+            $('#loading').hide();
+            updateLabels();
+            $( "#tabs" ).tabs({ active: 2 });
+        }
+    });
+
+
+    //updateLabels();
+    //$( "#tabs" ).tabs({ active: 2 });
+});
+
+function buildTableLabels(headerNames) {
+	var table = document.createElement("table");
+	table.className="gridtable";
+	table.width = "100%";
+	var thead = document.createElement("thead");
+	var tbody = document.createElement("tbody");
+	var headRow = document.createElement("tr");
+	["Label name","Enabled","Color","Remove"].forEach(function(el) {
+		  var th=document.createElement("th");
+		  th.appendChild(document.createTextNode(el));
+		  headRow.appendChild(th);
+	});
+	thead.appendChild(headRow);
+	table.appendChild(thead); 
+
+    var index = 1;
+    headerNames.forEach(function(el) {
+        var tr = document.createElement("tr");
+
+        //Label name        
+        var td = document.createElement("td");
+        td.align = "center";			
+        td.appendChild(document.createTextNode(el))
+        tr.appendChild(td);
+
+        //Enable (Checkbox)				
+        var td = document.createElement("td");		
+        td.align = "center";        
+        var checkbox = document.createElement('input');
+        checkbox.type = "checkbox";
+        checkbox.name = "enableLabel";		
+        checkbox.id = "enableLabel";
+        checkbox.value = el;
+        checkbox.checked = false;
+        checkbox.onchange = function(){
+            //Get selected labels            
+            var selected = [];
+            $('div#labels input[type=checkbox]').each(function() {
+                if ($(this).is(":checked")) {
+                    selected.push($(this).attr('value'));
+                }
+            });
+            console.log("selected", selected);
+            generateLabelData(selected);            
+
+            return false;
+        };
+        td.appendChild(checkbox);
+        tr.appendChild(td);
+        		
+        //Label color
+        var td = document.createElement("td");
+        td.style.backgroundColor = colorLabels[index++];
+        td.style.width = 40;
+        td.appendChild(document.createTextNode(" "))
+        tr.appendChild(td);
+        
+        //Button Remove
+        var td = document.createElement("td");
+        td.style.width = 90;
+        var button = document.createElement('button');
+        button.innerHTML = 'Remove Label';
+        button.onclick = function(){            
+            console.log(el);
+        
+            if (confirm("Do you confirm the removal of the label: "+el+"?")) {
+                $("#labelName").val(el);
+                $("#labelList").val([]);        
+                $.ajax({
+                    type: "POST",
+                    url: "/removeLabels",
+                    dataType: "json",
+                    data: $("#labelForm").serialize(),
+                    //beforeSend: function() {
+                    //    $('#result').html('<img src="loading.gif" />');
+                    //},
+                    success: function(result) {
+                        updateLabels();
+                    }
+                });
+            };
+        
+            return false;
+        };
+        td.appendChild(button);
+        tr.appendChild(td);
+
+        tbody.appendChild(tr);  
+    });
+
+    table.appendChild(tbody);
+
+    return table;
+}
+
+function updateLabels(){
+	
+    //if (fileExists('http://localhost:{{port}}/Extraction/features_labels.csv')){
+
+        //Preencho uma tabela na aba "Labels" com um checkbox em qual será visualizado e sua cor
+        //  De início apenas o último label aparece marcado
+        //  Por enquanto labels sobrepostos vão utilizar a cor do último identificado, depois troco por "pie charts".
+
+        d3.csv('http://localhost:{{port}}/Extraction/features_labels.csv', function(error, data){
+            var headerNames = d3.keys(data[0]);
+
+            document.getElementById("labels").innerHTML = "";
+            document.getElementById("labels").appendChild(buildTableLabels(headerNames));
+        });
+    //}
+}
+
+function generateLabelData(enabledLabels){
+    //console.log("Enabled Labels",enabledLabels);
+
+    //criar vetor de labels
+    d3.csv('http://localhost:{{port}}/Extraction/features_labels.csv', function(error, data){
+        var headerNames = d3.keys(data[0]);                    
+
+        data1 = [];        
+        data.forEach(function(d, i) {
+            labelIndex = 0;
+            labelName = "";
+            headerNames.forEach(function(dd,j){
+                if (d[dd] == 1){
+                    enabledLabels.forEach(function(ddd,k){
+                        if (dd == ddd) {
+                            console.log("label enabled",dd);
+                            labelIndex = j+1;
+                            labelName = dd;
+                        }
+                    });
+                }                
+            });
+            data1.push({'labelName':labelName, 'labelIndex':labelIndex});
+        });        
+        //console.log("LABELS",data1);
+
+        //updateRadviz passando os labels
+        updateRadviz(layers, data1);
+    });
+
+}
+
+// ##########################################################################################################
+// ### On page load #########################################################################################
+// ##########################################################################################################
+
+$( "#tabs" ).tabs();
+
+updateFeaturesNames();
+
+// If there are labels, load them.
+updateLabels();
+generateLabelData(currentLabels);
+
+var contentWidth = document.getElementById("csscontent").clientWidth;
+var contentHeight = document.getElementById("csscontent").clientHeight;
+var widthLeft = 650;
+
+$("#divLeft").width(widthLeft);
+$("#divRight").width(contentWidth-widthLeft-30);
+
+$("#divLeft").height(contentHeight-25);
+$("#divRight").height(contentHeight-25);
+
+$("#radviz").width(contentWidth-widthLeft-30);
+$("#radviz").height(contentHeight-25);
+
+
+LabelMaker1()
+	.$el(d3.select("#labelmaker1"))
+	.minFreq(0)
+	.maxFreq(22050)
+	.sampleWindow(1)
+	.audioSeconds(60)        
+	.specImg("static/images/emptySpec.png")
+	.currentSample(-10)
+	.render();
+
+var line2 = linechart1()
+	.$el(d3.select("#linechart2"))
+	.width(450)
+	.height(100) // Set height
+	.color("red") // Set color
+	//.data(getData()) // Set data
+	.transitionTime(300)
+	.render();
+
+wavesurfer1.load('static/images/emptySpec.mp3');
+
+$(window).load(function() {
+    $('#loading').hide();
+});
+  
+</script>
+
+</body>
+</html>
