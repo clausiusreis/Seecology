@@ -251,15 +251,17 @@ function ConcentricRadviz(options){
 
 	                var string = "" +
 	                		"<img width='200' height='90' src='" + serverPath + "/Extraction/AudioSpectrogram/" + dataOriginal[i].FileName + ".png' /><br>" +
-            				"<b>Info do sample.</b><br>" +
-            				"Info, info, info...";
+            				"<b>"+dataOriginal[i].FileName+"</b><br>" +
+            				"Sample: "+ dataOriginal[i].SecondsFromStart+"<br>"+
+            				"Date: "+ dataOriginal[i].Date+"<br>"+
+            				"Time: "+ dataOriginal[i].Time;
 
 	                //Testar a posição do mouse em relação ao RADVIZ e colocar o tooltip a direita ou esquerda
 	                div .html(string) //this will add the image on mouseover
 	                    .style("left", (d3.event.x-230) + "px")     
 	                    .style("top", (d3.event.y-100) + "px")
 	                    .style("width", "208px")
-	                    .style("height", "120px")
+	                    .style("height", "150px")
 	                    .style("font-color", "white");
 		      	})
 		      	.on('mouseleave', function(d) {
