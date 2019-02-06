@@ -339,40 +339,16 @@ def unifyCSV(mainPath,
     #load original CSV
     df = pd.read_csv(resultingFile)
 
-    ### DATA GROUPING ###################################################################################
-    if (groupingOperation == "mean"):
-        result = df.groupby(['FileName', 'Date', 'Time']).mean()
+    ### DATA GROUPING ###################################################################################    
+    result = df.groupby(['FileName', 'Date', 'Time', 'SecondsFromStart']).mean()
+    result = pd.DataFrame(result)    
+    if (result.shape[0] == 0):
+        result = df.groupby(['FileName', 'SecondsFromStart']).mean()
         result = pd.DataFrame(result)
-        result.to_csv('%s_group.csv' % (resultingFile[:-4]), sep=',')
-
-        if (result.shape[0] == 0):        
-            result = df.groupby(['FileName']).mean()
-            result = pd.DataFrame(result)
-            result.to_csv('%s_group.csv' % (resultingFile[:-4]), sep=',')
-
-    if (groupingOperation == "median"):
-        result = df.groupby(['FileName', 'Date', 'Time']).median()
-        result = pd.DataFrame(result)
-        result.to_csv('%s_group.csv' % (resultingFile[:-4]), sep=',')
-        
-        if (result.shape[0] == 0):
-            result = df.groupby(['FileName']).median()
-            result = pd.DataFrame(result)
-            result.to_csv('%s_group.csv' % (resultingFile[:-4]), sep=',')
-
-    if (groupingOperation == "none"):
-        result = df.groupby(['FileName', 'Date', 'Time', 'SecondsFromStart']).mean()
-        result = pd.DataFrame(result)
-        result.to_csv('%s_group.csv' % (resultingFile[:-4]), sep=',')
-        
-        if (result.shape[0] == 0):
-            result = df.groupby(['FileName', 'SecondsFromStart']).mean()
-            result = pd.DataFrame(result)
-            result.to_csv('%s_group.csv' % (resultingFile[:-4]), sep=',')
 
     ### REMOVE OUTLIERS #################################################################################
     if (removeOutliers):
-        result = removeOutliersFromData(result)    
+        result = removeOutliersFromData(result)
 
     ### NORMALIZATION ###################################################################################
     #def normalize(df):
@@ -478,7 +454,52 @@ def unifyCSV(mainPath,
         normalized_df=(result-result.median())/(((result-result.median()) ** 2).sum()).apply(np.sqrt)
         result = pd.DataFrame(normalized_df)
         result.to_csv('%s_norm.csv' % (resultingFile[:-4]), sep=',')
+
+    ### DATA GROUPING ###################################################################################
+    df = pd.read_csv("%s/Extraction/features_norm.csv" % (currentPath))
+    
+    if (groupingOperation == "mean"):
+        result = df.groupby(['FileName', 'Date', 'Time']).mean()
+        result = pd.DataFrame(result)
+        result.to_csv('%s_group.csv' % (resultingFile[:-4]), sep=',')
+
+        if (result.shape[0] == 0):        
+            result = df.groupby(['FileName']).mean()
+            result = pd.DataFrame(result)
+            result.to_csv('%s_group.csv' % (resultingFile[:-4]), sep=',')
+
+    if (groupingOperation == "median"):
+        result = df.groupby(['FileName', 'Date', 'Time']).median()
+        result = pd.DataFrame(result)
+        result.to_csv('%s_group.csv' % (resultingFile[:-4]), sep=',')
         
+        if (result.shape[0] == 0):
+            result = df.groupby(['FileName']).median()
+            result = pd.DataFrame(result)
+            result.to_csv('%s_group.csv' % (resultingFile[:-4]), sep=',')
+
+    if (groupingOperation == "none"):
+        result = df.groupby(['FileName', 'Date', 'Time', 'SecondsFromStart']).mean()
+        result = pd.DataFrame(result)
+        result.to_csv('%s_group.csv' % (resultingFile[:-4]), sep=',')
+        
+        if (result.shape[0] == 0):
+            result = df.groupby(['FileName', 'SecondsFromStart']).mean()
+            result = pd.DataFrame(result)
+            result.to_csv('%s_group.csv' % (resultingFile[:-4]), sep=',')
+
+    ### Generate individual normalized files ##############################################################
+    df = pd.DataFrame()
+    df = pd.read_csv("%s/Extraction/features_norm.csv" % (currentPath))
+    
+    auxLoop = df.groupby(['FileName', 'Date', 'Time']).mean()
+    if (auxLoop.shape[0] == 0):
+        auxLoop = df.groupby(['FileName', 'SecondsFromStart']).mean()
+
+    for index, row in auxLoop.iterrows():
+        df2 = df[df['FileName'] == index[0]]
+        df2.to_csv('%s/Extraction/AudioFeatures/%s.nor' % (currentPath, index[0]), sep=',', index=False)
+            
     print("#### PROCESSED CSV GENERATED ####")
 
 def groupFeatures(feat, fileIdent, fileDateTimeMask, GENERAL_timeWindow):
@@ -1720,7 +1741,12 @@ def extractionProcess(jsonData, dbname):
         os.makedirs("%s/Extraction/AudioMP3" % (jsonData['GENERAL_mainPath']))
 
     if not os.path.exists("%s/Extraction/AudioSpectrogram" % (jsonData['GENERAL_mainPath'])):
-        os.makedirs("%s/Extraction/AudioSpectrogram" % (jsonData['GENERAL_mainPath']))
+        os.makedirs("%s/Extraction/AudioSpectrogram" % (jsonData['GENERAL_mainPath']))    
+
+    if os.path.exists("%s/Extraction/features_labels.csv" % (jsonData['GENERAL_mainPath'])):
+        os.remove("%s/Extraction/features_labels.csv" % (currentPath))
+        df = pd.DataFrame()
+        df.to_csv("%s/Extraction/features_labels.csv" % (currentPath), sep=";")
 
     # Reset the extraction error report
     with open("/".join([jsonData['GENERAL_mainPath'], "Extraction/PROCESSING_ERROR_FeatureExtraction.log"]), "w") as myfile:
@@ -2697,31 +2723,29 @@ def addLabels():
     
     labelName = request.form.get('labelName')
     labelList = request.form.getlist('labelList')
-    
-    print(labelList[0])
-    
+        
     #break the labelList by ";"
     labelList1 = labelList[0].split(";")
-    
+
+    dfFeatures = pd.read_csv("%s/Extraction/features_group.csv" % (currentPath))
+
     # Load the file if exists, otherwise, create it
     df = pd.DataFrame()
     df1 = pd.DataFrame()
     if os.path.exists("%s/Extraction/features_labels.csv" % (currentPath)):
         df = pd.read_csv("%s/Extraction/features_labels.csv" % (currentPath))
-    else:    
+    else:
         df.to_csv("%s/Extraction/features_labels.csv" % (currentPath), sep=";")
-    
-    dfFeatures = pd.read_csv("%s/Extraction/features_norm.csv" % (currentPath))
-    
-    if (df.empty):        
+
+    if (df.empty):
         df = pd.DataFrame(columns=[labelName])
         for i in range( len(dfFeatures.index) ):
             df = df.append({labelName: 0}, ignore_index=True)
         
         for i in range( len(dfFeatures.index) ):
             for j in range( len(labelList1) ):
-                auxLL = labelList1[j].split("|")        
-                if (auxLL[0] == dfFeatures.values[i][0]) & (int(auxLL[1]) == dfFeatures.values[i][3]):                
+                auxLL = labelList1[j].split("|")
+                if (auxLL[0] == dfFeatures.values[i][0]) & (float(auxLL[1]) == dfFeatures.values[i][3]):
                     df.values[i][0] = 1
     else:
         if labelName in df.columns:
@@ -2730,11 +2754,11 @@ def addLabels():
         df1 = pd.DataFrame(columns=[labelName])
         for i in range( len(dfFeatures.index) ):
             df1 = df1.append({labelName: 0}, ignore_index=True)
-        
+
         for i in range( len(dfFeatures.index) ):
             for j in range( len(labelList1) ):
                 auxLL = labelList1[j].split("|")
-                if (auxLL[0] == dfFeatures.values[i][0]) & (int(auxLL[1]) == dfFeatures.values[i][3]):                
+                if (auxLL[0] == dfFeatures.values[i][0]) & (float(auxLL[1]) == dfFeatures.values[i][3]):                
                     df1.values[i][0] = 1
 
     # Add the column

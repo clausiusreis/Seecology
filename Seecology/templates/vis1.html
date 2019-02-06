@@ -141,7 +141,7 @@
 						container: '#waveform',
 						waveColor: 'black',
 						progressColor: 'red',
-						//barWidth: 3,
+						barWidth: 3,
 						//barHeight:5,
 						normalize: true,
 						splitChannels: false,
@@ -261,7 +261,7 @@ var firstItem = "";
 var firstLoad = true;
 var previousDay = "";
 function updateFeaturesNames(){
-	d3.csv('http://localhost:{{port}}/Extraction/features_norm.csv', function(error, data){		
+	d3.csv('http://localhost:{{port}}/Extraction/features_group.csv', function(error, data){		
 		if (firstLoad == true) {
 			var headerNames = d3.keys(data[0]);		
 			addFeatures(headerNames);
@@ -288,7 +288,7 @@ var updatePlayer = function (currentFile, currentSample, currentFeature, origin)
 
 	console.log("Current", currentSample, currentFile, currentFeature, origin);
 	
-    var csvFile1 = "http://localhost:{{port}}/Extraction/features_norm.csv";
+    var csvFile1 = "http://localhost:{{port}}/Extraction/features_group.csv";
     var csvFile2 = "http://localhost:{{port}}/Extraction/AudioMP3/"+currentFile+"_info.csv";    
 
 	if (origin == 0) {
@@ -306,11 +306,11 @@ var updatePlayer = function (currentFile, currentSample, currentFeature, origin)
     	
     	wavesurfer.load("http://localhost:{{port}}/Extraction/AudioMP3/"+currentFile+".mp3");		
 	}
-	
+
 	//updateLineChart(currentFile, $('#featuresPlayer').val());
 	currentFeature1 = currentFeature;
 	if (currentFile != "") {
-	    var csvFile1 = "http://localhost:{{port}}/Extraction/features_norm.csv";
+	    var csvFile1 = "http://localhost:{{port}}/Extraction/AudioFeatures/"+currentFile+".nor";
 	    
 		d3.csv(csvFile1, function (error, data) {
 	    	singleData = [];
@@ -334,7 +334,7 @@ var updatePlayer = function (currentFile, currentSample, currentFeature, origin)
 
 var updateLineChart = function (currentFeature) {	
 	//if (currentFile != "") {
-    var csvFile1 = "http://localhost:{{port}}/Extraction/features_norm.csv";
+    var csvFile1 = "http://localhost:{{port}}/Extraction/features_group.csv";
     
 	d3.csv(csvFile1, function (error, data) {
     	singleData = [];

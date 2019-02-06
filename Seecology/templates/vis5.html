@@ -192,6 +192,29 @@ div.tooltip {
 	border-radius: 4px;			
 	pointer-events: none;			
 }
+
+/* Loading gif */
+#loading {
+   width: 100%;
+   height: 100%;
+   top: 0;
+   left: 0;
+   position: fixed;
+   display: block;
+   opacity: 0.7;
+   background-color: #fff;
+   z-index: 99;
+   text-align: center;
+}
+
+#loading-image {
+  position: absolute;
+  -webkit-transform: translate(-50%,-50%);
+  transform: translate(-50%,-50%);
+  top: 50%;
+  left: 50%;
+  z-index: 100;
+}
 		</style>
 
         <script src="static/libs/d3.v4.js" type="text/javascript"></script>
@@ -200,6 +223,10 @@ div.tooltip {
     </head>
 
     <body>
+        <div id="loading">
+            <img id="loading-image" src="static/images/loading.gif" alt="Loading..." />
+        </div>
+    
         <!-- ########################################################################################################################## -->
         <!-- ### MENU BEGIN ########################################################################################################### -->
         <!-- ########################################################################################################################## -->
@@ -267,7 +294,7 @@ div.tooltip {
 						container: '#waveform',
 						waveColor: 'black',
 						progressColor: 'red',
-						//barWidth: 3,
+						barWidth: 3,
 						//barHeight:5,
 						normalize: true,
 						splitChannels: false,
@@ -395,7 +422,7 @@ wavesurfer.load('static/images/emptySpec.mp3');
 									container: '#waveform1',
 									waveColor: 'black',
 									progressColor: 'red',
-									//barWidth: 3,
+									barWidth: 3,
 									//barHeight:5,
 									normalize: true,
 									splitChannels: false,
@@ -496,7 +523,7 @@ var firstItem = "";
 var firstLoad = true;
 var previousDay = "";
 function updateFeaturesNames(){
-	d3.csv('http://localhost:{{port}}/Extraction/features_norm.csv', function(error, data){		
+	d3.csv('http://localhost:{{port}}/Extraction/features_group.csv', function(error, data){		
 		if (firstLoad == true) {
 			var headerNames = d3.keys(data[0]);		
 			addFeatures(headerNames);
@@ -525,8 +552,9 @@ var updatePlayer = function (currentFile, currentSample, currentFeature, origin)
 
 	console.log("Current", currentSample, currentFile, currentFeature, origin);
 	
-    var csvFile1 = "http://localhost:{{port}}/Extraction/features_norm.csv";
-    var csvFile2 = "http://localhost:{{port}}/Extraction/AudioMP3/"+currentFile+"_info.csv";    
+   //var csvFile1 = "http://localhost:{{port}}/Extraction/features_group.csv";
+   var csvFile1 = "http://localhost:{{port}}/Extraction/AudioFeatures/"+currentFile+".nor";
+   var csvFile2 = "http://localhost:{{port}}/Extraction/AudioMP3/"+currentFile+"_info.csv";    
 
 	if (origin == 0) {
     	d3.csv(csvFile2, function (error, infoData) {
@@ -547,8 +575,8 @@ var updatePlayer = function (currentFile, currentSample, currentFeature, origin)
 	//updateLineChart(currentFile, $('#featuresPlayer').val());
 	currentFeature1 = currentFeature;
 	if (currentFile != "") {
-	    var csvFile1 = "http://localhost:{{port}}/Extraction/features_norm.csv";
-	    
+	   //var csvFile1 = "http://localhost:{{port}}/Extraction/features_group.csv";
+
 		d3.csv(csvFile1, function (error, data) {
 	    	singleData = [];
 	    	singleDataMean = [];
@@ -578,33 +606,37 @@ var updatePlayer1 = function (currentFile, currentSample) {
 
 	//$( "#tabs" ).tabs({ active: 3 });
 	
-    var csvFile1 = "http://localhost:{{port}}/Extraction/features_norm.csv";
+    //var csvFile1 = "http://localhost:{{port}}/Extraction/features_group.csv";
     var csvFile2 = "http://localhost:{{port}}/Extraction/AudioMP3/"+currentFile+"_info.csv";    
-	
-	d3.csv(csvFile2, function (error, infoData) {
-		LabelMaker1()
-            .$el(d3.select("#labelmaker1"))
-            .minFreq(0)
-            .maxFreq(infoData[0]['maxFreq'])
-            .sampleWindow(infoData[0]['sampleWindow'])
-            .audioSeconds(infoData[0]['audioSeconds'])
-	        .currentSample(currentSample/infoData[0]['sampleWindow'])
-            .specImg('http://localhost:{{port}}/Extraction/AudioSpectrogram/'+currentFile+'.png')
-            .render();
-    });
-	
-    console.log(currentFile);
-	wavesurfer1.load("http://localhost:{{port}}/Extraction/AudioMP3/"+currentFile+".mp3");
-	//changeImage1('http://localhost:{{port}}/Extraction/AudioSpectrogram/'+currentFile+'.png');
-	
-	updateLineChart1(currentFile, $('#featuresPlayer').val());
+    var mp3File = "http://localhost:{{port}}/Extraction/AudioMP3/"+currentFile+".mp3";    
+    
+    //if (fileExists(mp3File)){      
+    	d3.csv(csvFile2, function (error, infoData) {
+    		LabelMaker1()
+                .$el(d3.select("#labelmaker1"))
+                .minFreq(0)
+                .maxFreq(infoData[0]['maxFreq'])
+                .sampleWindow(infoData[0]['sampleWindow'])
+                .audioSeconds(infoData[0]['audioSeconds'])
+    	        .currentSample(currentSample/infoData[0]['sampleWindow'])
+                .specImg('http://localhost:{{port}}/Extraction/AudioSpectrogram/'+currentFile+'.png')
+                .render();
+        });
+            
+        console.log(currentFile);
+        wavesurfer1.load(mp3File);
+    //}	
+    
+    updateLineChart1(currentFile, $('#featuresPlayer').val());
 };
 
 var updateLineChart1 = function (currentFile, currentFeature) {
 	
+   var csvFile1 = "http://localhost:{{port}}/Extraction/AudioFeatures/"+currentFile+".nor";
+   //var csvFile1 = "http://localhost:{{port}}/Extraction/features_group.csv";
+
 	if (currentFile != "") {
-	    var csvFile1 = "http://localhost:{{port}}/Extraction/features_norm.csv";
-	    
+
 		d3.csv(csvFile1, function (error, data) {
 	    	singleData = [];
 	    	singleDataMean = [];
@@ -618,7 +650,7 @@ var updateLineChart1 = function (currentFile, currentFeature) {
 	    	singleData.push({x:0, y:0});
 	    	singleData[singleData.length-1].x = singleData[singleData.length-2].x+singleData[1].x;;
 	    	singleData[singleData.length-1].y = singleData[singleData.length-2].y;
-	    	
+
 	    	meanValue = d3.mean(singleDataMean, function(d) { return +d.y });
 	        line2.mean(meanValue).data(singleData).render();
 	    });
@@ -720,7 +752,6 @@ function buildTable(data) {
 		button.onclick = function(){
 			currentFile = el.FileName;
 			updatePlayer1(el.FileName, el.SecondsFromStart);
-			//console.log("Abrir: "+el.FileName+"|"+el.SecondsFromStart);
 			return false;
 		};
 		td.appendChild(button);
@@ -731,11 +762,7 @@ function buildTable(data) {
 		button.innerHTML = 'Big';
 		button.onclick = function(){
             currentFile = el.FileName;
-            //updatePlayer1(el.FileName, el.SecondsFromStart);
             updatePlayer(el.FileName, el.SecondsFromStart, $("#featuresPlayer").val(), 0);
-
-            //SelectElement("featuresPlayer1", $("#featuresPlayer").val());
-
             document.getElementById('light').style.display='block';
             document.getElementById('fade').style.display='block';
 
@@ -772,7 +799,7 @@ function buildTable(data) {
 
 function updateGrid(selection){
 	
-	d3.csv('http://localhost:{{port}}/Extraction/features_norm.csv', function(error, data){
+	d3.csv('http://localhost:{{port}}/Extraction/features_group.csv', function(error, data){
 			
 		data1 = [];
 		data.forEach(function(d, i) {
@@ -792,7 +819,7 @@ function updateGrid(selection){
 /*
 function updateHistogram(feature){
 	
-	d3.csv('http://localhost:{{port}}/Extraction/features_norm.csv', function(error, data){
+	d3.csv('http://localhost:{{port}}/Extraction/features_group.csv', function(error, data){
 
 		actualFeature = feature;
 				
@@ -839,7 +866,7 @@ function updateRadviz(layers, labels=[]){
     currentLabels = labels;
     
     //d3.csv('http://localhost:{{port}}/Extraction/features_labels.csv', function(error, data){
-        	d3.csv('http://localhost:{{port}}/Extraction/features_norm.csv', function(error, data){
+        	d3.csv('http://localhost:{{port}}/Extraction/features_group.csv', function(error, data){
         		document.getElementById("radviz").innerHTML = "";
         		
         		if (firstLoad == true) {
@@ -850,12 +877,12 @@ function updateRadviz(layers, labels=[]){
         		
         		if (layers.length > 2) {
         			var radviz1 = ConcentricRadviz({
-        				    container   : 'radviz',
-        				    layers		: layers,
-        				    data		: data,
-                          serverPath: 'http://localhost:{{port}}',
-                          labels: labels,
-                          samplesOpacity: 0.7
+                    container   : 'radviz',
+                    layers		: layers,
+                    data		: data,
+                    serverPath: 'http://localhost:{{port}}',
+                    labels: labels,
+                    samplesOpacity: 0.7
         			}).render();
         		}
         	});
@@ -883,8 +910,10 @@ $("#labelForm").on('submit', function (e) {
     //console.log("labelList",selected.join(";"));
     
     $("#labelName").val(labelName);
-    $("#labelList").val(selected.join(";"));
+    $("#labelList").val(selected.join(";")); 
 
+    $('#loading').show();
+    
     $.ajax({
         type: "POST",
         url: "/addLabels",
@@ -894,22 +923,16 @@ $("#labelForm").on('submit', function (e) {
             //alert(result['status']);
             //console.log(result['status']);
             //console.log("Criar a função loadLabels() e chamar no início da página e aqui.");
+            $('#loading').hide();
             updateLabels();
+            $( "#tabs" ).tabs({ active: 2 });
         }
     });
 
 
-    updateLabels();
-    $( "#tabs" ).tabs({ active: 2 });    
+    //updateLabels();
+    //$( "#tabs" ).tabs({ active: 2 });
 });
-
-function fileExists(url)
-{
-    var http = new XMLHttpRequest();
-    http.open('HEAD', url, false);
-    http.send();
-    return http.status!=404;
-}
 
 function buildTableLabels(headerNames) {
 	var table = document.createElement("table");
@@ -953,7 +976,7 @@ function buildTableLabels(headerNames) {
                     selected.push($(this).attr('value'));
                 }
             });
-            
+            console.log("selected", selected);
             generateLabelData(selected);            
 
             return false;
@@ -1008,23 +1031,23 @@ function buildTableLabels(headerNames) {
 
 function updateLabels(){
 	
-    if (fileExists('http://localhost:{{port}}/Extraction/features_labels.csv')){
+    //if (fileExists('http://localhost:{{port}}/Extraction/features_labels.csv')){
 
         //Preencho uma tabela na aba "Labels" com um checkbox em qual será visualizado e sua cor
         //  De início apenas o último label aparece marcado
         //  Por enquanto labels sobrepostos vão utilizar a cor do último identificado, depois troco por "pie charts".
 
         d3.csv('http://localhost:{{port}}/Extraction/features_labels.csv', function(error, data){
-            var headerNames = d3.keys(data[0]);                    
+            var headerNames = d3.keys(data[0]);
 
             document.getElementById("labels").innerHTML = "";
             document.getElementById("labels").appendChild(buildTableLabels(headerNames));
         });
-    }
+    //}
 }
 
 function generateLabelData(enabledLabels){
-    console.log("Enabled Labels",enabledLabels);
+    //console.log("Enabled Labels",enabledLabels);
 
     //criar vetor de labels
     d3.csv('http://localhost:{{port}}/Extraction/features_labels.csv', function(error, data){
@@ -1047,7 +1070,7 @@ function generateLabelData(enabledLabels){
             });
             data1.push({'labelName':labelName, 'labelIndex':labelIndex});
         });        
-        console.log("LABELS",data1);
+        //console.log("LABELS",data1);
 
         //updateRadviz passando os labels
         updateRadviz(layers, data1);
@@ -1102,7 +1125,10 @@ var line2 = linechart1()
 
 wavesurfer1.load('static/images/emptySpec.mp3');
 
-
+$(window).load(function() {
+    $('#loading').hide();
+});
+  
 </script>
 
 </body>
