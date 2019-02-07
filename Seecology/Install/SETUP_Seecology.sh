@@ -34,3 +34,10 @@ yes | apt-get install python-dev;
 yes | apt-get install flac;
 yes | pip install librosa==0.6.2;
 yes | pip install pysoundfile==0.9.0.post1;
+
+echo "#############################################################################";
+echo "To create a shortcut to the application copy 'Seecology_Shortcut.sh' to the ";
+echo "desktop and change '/pathTo/Seecology' to the full path of 'Seecology.py'.";
+echo "If you like, a icon is also available.";
+echo "#############################################################################";
+
