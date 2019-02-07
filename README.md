@@ -6,21 +6,19 @@ Author: Clausius Duque Reis - UFV-CRP / ICMC-USP (clausiusreis@gmail.com).
 
 Advisor: Maria Cristina Ferreira de Oliveira - ICMC-USP.
 
-Seecology is a framework for feature extraction of ecological recordings, providing easy visualization of the resulting data immediately after the extraction process. This solution provides a single method to extract data, providing individual settings for each feature and several normalization methods to help researchers.
+Seecology is a framework for feature extraction and visualization of ecological recordings, providing an easy way to visualize the resulting data immediately after the extraction process. Our solution provides a simple method to extract data with individual settings for each feature.
 
-The Seecology framework provides visualizations specially created to allow easy access for ecologists, from a single extracted feature to 24h spectrograms compiled with almost no configuration needed.
-
-Among the visualizations available at this moment, we provide a comparative line chart with media player capabilities, a concentric radviz with a labeling system to help create annotated datasets and a boat detection visualization to display the result of a novel algorithm developed during my PhD, called FAVS (Frequency Amplitude Variation Signature), capable of high sensitive detection of the presence as well as the signatures of vessels, even in noisy conditions.
+Among the visualizations available at this moment, we provide a comparative line chart with media player capabilities, a concentric radviz with a labeling system to help create annotated datasets and a boat detection visualization to display the result of a novel algorithm developed during my PhD, called FAVS (Frequency Amplitude Variation Signature), capable of high sensitive detection of the presence (With specific signatures) of vessels, even in noisy conditions.
 
 More visualizations will be added in the next few months.
 
 ## Citation
 Research published about the content of this framework:
 
-[A Visualization Framework for Feature Investigation in Soundscape Recordings](https://www.researchgate.net/publication/327390554_A_Visualization_Framework_for_Feature_Investigation_in_Soundscape_Recordings): September 2018 ([DOI: 10.1109/iV.2018.00091](http://dx.doi.org/10.1109/iV.2018.00091))
+[A Visualization Framework for Feature Investigation in Soundscape Recordings](https://www.researchgate.net/publication/327390554_A_Visualization_Framework_for_Feature_Investigation_in_Soundscape_Recordings) (September 2018)
 
 ## Installation procedures
-Inside the code there are a installation shell script (Seecology/Install/SETUP_Seecology.sh) created to work on a Linux Mint 19.1 Cinnamon machine. The code should be able to run on most machines, provided that libraries versions are respected.
+On [Seecology/Install/SETUP_Seecology.sh](https://github.com/clausiusreis/Seecology/blob/master/Seecology/Install/SETUP_Seecology.sh) can be found a script to help with the setup process of the libraries. The framework was designed to work on a Linux Mint 19.1 Cinnamon machine, however, the code should be able to run on most machines, provided that libraries versions and paths (Windows) are respected.
 
 ## Tutorial
 Currently in development, will be available shortly. 
