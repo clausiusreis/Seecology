@@ -13,9 +13,11 @@ Among the visualizations available at this moment, we provide a comparative line
 More visualizations will be added in the next few months.
 
 ## Citation
-Research published about the content of this framework:
+Research published on the content of this framework:
 
 [A Visualization Framework for Feature Investigation in Soundscape Recordings](https://www.researchgate.net/publication/327390554_A_Visualization_Framework_for_Feature_Investigation_in_Soundscape_Recordings) (September 2018)
+
+[Automatic Detection of Vessel Signatures in Audio Recordings with Spectral Amplitude Variation Signature](https://www.researchgate.net/publication/334057825_Automatic_Detection_of_Vessel_Signatures_in_Audio_Recordings_with_Spectral_Amplitude_Variation_Signature) (June 2019)
 
 ## Installation procedures
 On [Seecology/Install/SETUP_Seecology.sh](https://github.com/clausiusreis/Seecology/blob/master/Seecology/Install/SETUP_Seecology.sh) can be found a script to help with the setup process of the libraries. The framework was designed to work on a Linux Mint 19.1 Cinnamon machine, however, the code should be able to run on most machines, provided that libraries versions and paths (Windows) are respected.
