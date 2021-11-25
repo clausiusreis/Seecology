@@ -88,5 +88,5 @@ dependencies:
     - scipy==1.2.3
     - sklearn==0.0
     - werkzeug==1.0.1
-prefix: /home/clausius/miniconda2/envs/seecology
+prefix: C:/Users/Clausius/anaconda3/envs/seecology
 

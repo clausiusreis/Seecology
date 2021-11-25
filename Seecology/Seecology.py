@@ -14,7 +14,7 @@ import random, threading, webbrowser
 import pandas as pd
 import Tkinter, tkFileDialog
 import matplotlib.pyplot as plt
-#import matplotlib.patches as mpatches
+import matplotlib.patches as mpatches
 import librosa
 #from librosa import display
 import soundfile as sf
@@ -308,7 +308,7 @@ def unifyCSV(mainPath,
     csvFiles.sort()
     
     print("#### GENERATING UNIFIED CSV ####")
-    print "Processing directory: %s" % mainPath
+    print("Processing directory: %s" % mainPath)
 
     firstHeader = 0
     resultingFile = '%s/Extraction/%s.csv' % (mainPath, resultingCSVName)
@@ -316,7 +316,7 @@ def unifyCSV(mainPath,
         csvwriter = csv.writer(outputCsvfile, delimiter=',')
     
         for f in csvFiles:
-            print "   Processing file: %s" % f
+            print("   Processing file: %s" % f)
             with open("%s/Extraction/AudioFeatures/%s" % (mainPath, f), 'rb') as ff:
                 reader = csv.reader(ff)
     
@@ -334,7 +334,7 @@ def unifyCSV(mainPath,
     print("#### UNIFIED CSV GENERATED ####")
 
     print("#### NORMALIZING CSV ####")
-    print "Processing file: %s" % (resultingFile)
+    print("Processing file: %s" % resultingFile)
     
     #load original CSV
     df = pd.read_csv(resultingFile)
@@ -693,13 +693,13 @@ def groupFeatures(feat, fileIdent, fileDateTimeMask, GENERAL_timeWindow):
 ###########################################################################################################
 def smooth(x,window_len=11,window='hanning'):
     if x.ndim != 1:
-        raise ValueError, "smooth only accepts 1 dimension arrays."
+        raise ValueError("smooth only accepts 1 dimension arrays.")
     if x.size < window_len:
-        raise ValueError, "Input vector needs to be bigger than window size."
+        raise ValueError("Input vector needs to be bigger than window size.")
     if window_len<3:
         return x
     if not window in ['flat', 'hanning', 'hamming', 'bartlett', 'blackman']:
-        raise ValueError, "Window is on of 'flat', 'hanning', 'hamming', 'bartlett', 'blackman'"
+        raise ValueError("Window is on of 'flat', 'hanning', 'hamming', 'bartlett', 'blackman'")
     s=np.r_[2*x[0]-x[window_len-1::-1],x,2*x[-1]-x[-1:-window_len:-1]]
     if window == 'flat': #moving average
         w=np.ones(window_len,'d')
@@ -924,7 +924,8 @@ def extractBoatSignatures():
                 boatDet = np.zeros(len(specMatrixMean))
                 #boatDet1 = np.zeros(len(specMatrixMean))
                 variance = np.zeros(len(specMatrixMean))
-                for i in xrange(5,len(specMatrixMean)-5, 1): # Era 3 o 1
+                #for i in xrange(5,len(specMatrixMean)-5, 1): # Era 3 o 1
+                for i in range(5,len(specMatrixMean)-5, 1): # Era 3 o 1
                     #vAmp = specMatrixMean[i] - specMatrixMean[i+1]
                     vAmp = specMatrixMeanS[i] - specMatrixMeanS[i+1]
         
@@ -936,7 +937,8 @@ def extractBoatSignatures():
             
                     # Detecção dos eventos significantes  (o -topDB é só para mostrar, poderia ser 1 e 0)
                     if (variance[i] >= specMatrixMeanSD * SDThreshold):
-                        for j in xrange(-2,3,1): #-6,7 # Janela de 5 Hz para poder fazer cruzamento de informações na classificação
+                        #for j in xrange(-2,3,1): #-6,7 # Janela de 5 Hz para poder fazer cruzamento de informações na classificação
+                        for j in range(-2,3,1): #-6,7 # Janela de 5 Hz para poder fazer cruzamento de informações na classificação
                             #if plotImages:                    
                             #    boatDet[i+j] = -topDB
                             #else:
@@ -1722,7 +1724,7 @@ def extractionProcess(jsonData, dbname):
     teste = jsonData
     
     print("#### EXTRACTION PROCESS BEGIN ####")
-    print "Processing directory: %s" % jsonData['GENERAL_mainPath']
+    print("Processing directory: %s" % jsonData['GENERAL_mainPath'])
 
     #REMOVER TODOS OS ARQUIVOS ANTERIORES
 
@@ -1768,7 +1770,7 @@ def extractionProcess(jsonData, dbname):
         if (f[-4:] in fileExt): 
             ##Check the extension MP3 need to be extracted
             if (f[-4:].lower() == '.mp3'):
-                print "    Extracting MP3 file to WAV: %s" % ( f )
+                print("    Extracting MP3 file to WAV: %s" % ( f ))
                 currentFileMP3 = "%s/%s" % (jsonData['GENERAL_mainPath'], f)                                
                 os.system("yes | ffmpeg -i %s %s.wav" % (currentFileMP3, currentFileMP3[:-4]))
     
@@ -2461,7 +2463,7 @@ def extractionProcess(jsonData, dbname):
     #print(" ")
 
 
-    print "#### EXTRACTION PROCESS FINISH ####"
+    print("#### EXTRACTION PROCESS FINISH ####")
       
     time.sleep(1)    
 
